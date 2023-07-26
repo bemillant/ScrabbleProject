@@ -1,4 +1,4 @@
-﻿namespace YourClientName
+﻿namespace OceanicBot
 
 module Scrabble =
 
