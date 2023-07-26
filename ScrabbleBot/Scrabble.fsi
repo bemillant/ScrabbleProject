@@ -1,4 +1,4 @@
-﻿namespace OceanicBot
+﻿namespace Zyzzyva
 
 module Scrabble =
 

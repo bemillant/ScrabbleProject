@@ -1,4 +1,4 @@
-﻿namespace OceanicBot
+﻿namespace Zyzzyva
 
 open ScrabbleUtil
 open ScrabbleUtil.ServerCommunication
