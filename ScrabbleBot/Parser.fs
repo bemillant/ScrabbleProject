@@ -43,12 +43,16 @@ module internal Parser
     let (.>*>) p1 p2  = (p1 .>> spaces) .>> (spaces >>. p2)
     let (>*>.) p1 p2  = (p1 .>> spaces) >>. (spaces >>. p2)
     let parenthesise p = pchar '(' >*>. p .>*> pchar ')'
-    let pid = pchar '_' <|> pletter .>>. many palphanumeric |>> (fun (c, lst) ->
-        let rec charListToString lst =
-            match lst with
-            | [] -> ""
-            | x::xs -> string x + charListToString xs
-        string c + charListToString lst)
+    // let pid = pchar '_' <|> pletter .>>. many palphanumeric |>> (fun (c, lst) ->
+    //     let rec charListToString lst =
+    //         match lst with
+    //         | [] -> ""
+    //         | x::xs -> string x + charListToString xs
+    //     string c + charListToString lst)
+    let punderscore = satisfy (fun x -> x = '_')
+    let pid =
+        pletter <|> punderscore .>>. many (palphanumeric <|> punderscore)
+        |>> fun (x, y) -> string x + System.String.Concat(Array.ofList (y))
     
     let unop op a = op .>*>. a |>> snd
     let binop op p1 p2 = p1 .>*>. op .>*>. p2 |>> fun ((a, b), c) -> (a, c)
