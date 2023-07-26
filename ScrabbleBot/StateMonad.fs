@@ -1,7 +1,4 @@
-﻿// Insert your StateMonad.fs from Assignment 6 here. All modules must be internal.
-
-
-module internal StateMonad
+﻿module internal StateMonad
 
     type Error = 
         | VarExists of string
@@ -48,13 +45,37 @@ module internal StateMonad
     let push : SM<unit> = 
         S (fun s -> Success ((), {s with vars = Map.empty :: s.vars}))
 
-    let pop : SM<unit> = failwith "Not implemented"      
+    let pop : SM<unit> =
+        S (fun s ->
+            match s.vars.Length with
+            | 0 -> Failure (IndexOutOfBounds 0)
+            | 1 -> Success ((), {s with vars = []})
+            | _ -> Success ((), {s with vars = s.vars.Tail}))
 
-    let wordLength : SM<int> = failwith "Not implemented"      
+    let wordLength : SM<int> =
+        S (fun s -> Success (s.word.Length, s))
 
-    let characterValue (pos : int) : SM<char> = failwith "Not implemented"      
+    let characterValue (pos : int) : SM<char> =
+        S (fun s ->
+            let outOfBounds = wordLength |> evalSM s
+            match outOfBounds with
+            | Failure failure -> Failure failure
+            | Success length ->
+                match length with
+                | l when l <= pos -> Failure (IndexOutOfBounds pos)
+                | _ when pos < 0 -> Failure (IndexOutOfBounds pos)
+                | _ -> Success (fst (s.word.Item pos), s))
 
-    let pointValue (pos : int) : SM<int> = failwith "Not implemented"      
+    let pointValue (pos : int) : SM<int> =
+        S (fun s ->
+            let outOfBounds = wordLength |> evalSM s
+            match outOfBounds with
+            | Failure failure -> Failure failure
+            | Success length ->
+                match length with
+                | l when l <= pos -> Failure (IndexOutOfBounds pos)
+                | _ when pos < 0 -> Failure (IndexOutOfBounds pos)
+                | _ -> Success (snd (s.word.Item pos), s))
 
     let lookup (x : string) : SM<int> = 
         let rec aux =
@@ -70,5 +91,30 @@ module internal StateMonad
               | Some v -> Success (v, s)
               | None   -> Failure (VarNotFound x))
 
-    let declare (var : string) : SM<unit> = failwith "Not implemented"   
-    let update (var : string) (value : int) : SM<unit> = failwith "Not implemented"      
+    let declare (var : string) : SM<unit> =
+        S (fun s ->
+            match s.vars.Head |> Map.containsKey var with
+            | true -> Failure (VarExists var)
+            | false ->
+                match s.reserved |> Set.contains var with
+                | true -> Failure (ReservedName var)
+                | false -> Success ((), { s with vars = (Map.add var 0 s.vars.Head) :: s.vars.Tail }))
+        
+    let update (var : string) (value : int) : SM<unit> =
+        S (fun s ->
+            let rec aux =
+                function
+                | [] -> Failure (VarNotFound var)
+                | m::ms ->
+                    match Map.tryFind var m with
+                    | None -> aux ms
+                    | Some v ->
+                        let updatedList =
+                            s.vars |> List.map (fun map ->
+                                if map = m then m |> Map.add var value
+                                else map)
+                        Success ((), { s with vars = updatedList })
+            aux s.vars)
+        
+
+    
