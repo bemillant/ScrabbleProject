@@ -1,0 +1,13 @@
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.deps.json
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.dll
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.pdb
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/bin/Debug/net7.0/ScrabbleUtil.dll
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.fsproj.AssemblyReference.cache
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.AssemblyInfoInputs.cache
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.AssemblyInfo.fs
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.fsproj.CoreCompileInputs.cache
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.fsproj.CopyComplete
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.dll
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/refint/ScrabbleBot.dll
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.pdb
+/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/obj/Debug/net7.0/ref/ScrabbleBot.dll

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "zyzvPLz1t+6Cgg1h5Ka8oQPkfq4vIwTEASWyJqI61rXUYAHiUBDIIoPWCR/XLYxzkn2qjjSibeWRN668Di/LKg==",
+  "success": true,
+  "projectFilePath": "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/ScrabbleBot.fsproj",
+  "expectedPackageFiles": [
+    "/Users/benjaminmillant/.nuget/packages/fparsec/1.1.1/fparsec.1.1.1.nupkg.sha512",
+    "/Users/benjaminmillant/.nuget/packages/fsharp.core/7.0.200/fsharp.core.7.0.200.nupkg.sha512"
+  ],
+  "logs": []
+}
