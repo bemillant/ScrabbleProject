@@ -104,12 +104,18 @@ module Scrabble =
                         playerNumber = st.playerNumber
                         hand = st.hand |> getRidOfTiles playedTiles |> addNewTiles newPieces
                         placedTiles = st.placedTiles |> placeTiles playedTiles
-                    }
-                    : State.state
+                    } : State.state
                 aux st'
             | RCM (CMPlayed (playerId, playedTiles, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = st // This state needs to be updated
+                let st' =
+                    {
+                        board = st.board
+                        dict = st.dict
+                        playerNumber = st.playerNumber
+                        hand = st.hand
+                        placedTiles = st.placedTiles |> placeTiles playedTiles
+                    } : State.state
                 aux st'
             | RCM (CMPlayFailed (playerId, playedTiles)) ->
                 (* Failed play. Update your state *)
@@ -123,15 +129,15 @@ module Scrabble =
         aux st
 
     let startGame 
-            (boardP : boardProg) 
-            (dictf : bool -> Dictionary.Dict) 
-            (numPlayers : uint32) 
-            (playerNumber : uint32) 
-            (playerTurn  : uint32) 
-            (hand : (uint32 * uint32) list)
-            (tiles : Map<uint32, tile>)
-            (timeout : uint32 option) 
-            (cstream : Stream) =
+            (boardP : boardProg)                (* Scrabble board *)
+            (dictf : bool -> Dictionary.Dict)   (* Dictionary (call with true if using a GADDAG, and false if using a Trie) *)
+            (numPlayers : uint32)               (* Number of players *)
+            (playerNumber : uint32)             (* Your player number *)
+            (playerTurn  : uint32)              (* starting player number *)
+            (hand : (uint32 * uint32) list)     (* starting hand (tile id, number of tiles) *)
+            (tiles : Map<uint32, tile>)         (* Tile lookup table *)
+            (timeout : uint32 option)           (* Timeout in miliseconds *)
+            (cstream : Stream) =                (* Communication channel to the server *)
         debugPrint 
             (sprintf "Starting game!
                       number of players = %d
