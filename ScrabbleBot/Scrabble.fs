@@ -46,16 +46,20 @@ module State =
     type state = {
         board         : Parser.board
         dict          : ScrabbleUtil.Dictionary.Dict
+        numberOfPlayers : uint32
         playerNumber  : uint32
+        currentPlayer : uint32
         hand          : MultiSet.MultiSet<uint32>
         placedTiles   : Map<coord, uint32>
     }
 
-    let mkState board dict playerNumber hand placedTiles =
+    let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles =
         {
             board = board
             dict = dict
+            numberOfPlayers = numberOfPlayers
             playerNumber = playerNumber
+            currentPlayer = currentPlayer
             hand = hand
             placedTiles = placedTiles
         }
@@ -71,6 +75,9 @@ module Scrabble =
     
     let playGame cstream pieces (st : State.state) =
         
+        let nextPlayer numberOfPlayers currentPlayer =
+            (currentPlayer % numberOfPlayers) + 1u
+        
         let placeTiles (playedTiles:PlayedTile list) (placedTiles:Map<coord, uint32>) =
             List.fold (fun acc (coord, (id, (_, _))) -> Map.add coord id acc) placedTiles playedTiles
             
@@ -83,16 +90,16 @@ module Scrabble =
         let rec aux (st : State.state) =
             Print.printHand pieces (State.hand st)
 
-            // remove the force print when you move on from manual input (or when you have learnt the format)
-            forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-            let input =  System.Console.ReadLine()
-            let move = RegEx.parseMove input
+            if st.currentPlayer = st.playerNumber then
+                // remove the force print when you move on from manual input (or when you have learnt the format)
+                forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
+                let input =  System.Console.ReadLine()
+                let move = RegEx.parseMove input
 
-            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-            send cstream (SMPlay move)
+                debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+                send cstream (SMPlay move)
 
             let msg = recv cstream
-            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
             match msg with
             | RCM (CMPlaySuccess(playedTiles, points, newPieces)) ->
@@ -101,7 +108,9 @@ module Scrabble =
                     {
                         board = st.board
                         dict = st.dict
+                        numberOfPlayers = st.numberOfPlayers
                         playerNumber = st.playerNumber
+                        currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
                         hand = st.hand |> getRidOfTiles playedTiles |> addNewTiles newPieces
                         placedTiles = st.placedTiles |> placeTiles playedTiles
                     } : State.state
@@ -112,7 +121,9 @@ module Scrabble =
                     {
                         board = st.board
                         dict = st.dict
+                        numberOfPlayers = st.numberOfPlayers
                         playerNumber = st.playerNumber
+                        currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
                         hand = st.hand
                         placedTiles = st.placedTiles |> placeTiles playedTiles
                     } : State.state
@@ -122,6 +133,20 @@ module Scrabble =
                 let st' = st // This state needs to be updated
                 aux st'
             | RCM (CMGameOver _) -> ()
+            | RCM (CMForfeit playerId) ->
+                let st' =
+                    {
+                        board = st.board
+                        dict = st.dict
+                        numberOfPlayers = st.numberOfPlayers - 1u
+                        playerNumber =
+                            if st.playerNumber > playerId then st.playerNumber - 1u
+                            else st.playerNumber
+                        currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                        hand = st.hand
+                        placedTiles = st.placedTiles
+                    } : State.state
+                aux st'
             | RCM a -> failwith (sprintf "not implmented: %A" a)
             | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st
 
@@ -152,5 +177,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet Map.empty)
+        fun () -> playGame cstream tiles (State.mkState board dict numPlayers playerNumber playerTurn handSet Map.empty)
         
