@@ -1,5 +1,6 @@
 ﻿namespace Zyzzyva
 
+open Parser
 open ScrabbleUtil
 open ScrabbleUtil.ServerCommunication
 
@@ -47,9 +48,17 @@ module State =
         dict          : ScrabbleUtil.Dictionary.Dict
         playerNumber  : uint32
         hand          : MultiSet.MultiSet<uint32>
+        placedTiles   : Map<coord, uint32>
     }
 
-    let mkState b d pn h = {board = b; dict = d;  playerNumber = pn; hand = h }
+    let mkState board dict playerNumber hand placedTiles =
+        {
+            board = board
+            dict = dict
+            playerNumber = playerNumber
+            hand = hand
+            placedTiles = placedTiles
+        }
 
     let board st         = st.board
     let dict st          = st.dict
@@ -58,8 +67,18 @@ module State =
 
 module Scrabble =
     open System.Threading
-
+    type PlayedTile = coord * (uint32 * (char * int))
+    
     let playGame cstream pieces (st : State.state) =
+        
+        let placeTiles (playedTiles:PlayedTile list) (placedTiles:Map<coord, uint32>) =
+            List.fold (fun acc (coord, (id, (_, _))) -> Map.add coord id acc) placedTiles playedTiles
+            
+        let getRidOfTiles (playedTiles:PlayedTile list) (hand:MultiSet.MultiSet<uint32>) =
+            playedTiles |> List.fold (fun acc (_, (id, (_, _))) -> MultiSet.removeSingle id acc) hand
+            
+        let addNewTiles (newPieces:(uint32 * uint32) list) (hand:MultiSet.MultiSet<uint32>) =
+            newPieces |> List.fold (fun acc (id, amount) -> MultiSet.add id amount acc) hand
 
         let rec aux (st : State.state) =
             Print.printHand pieces (State.hand st)
@@ -78,7 +97,15 @@ module Scrabble =
             match msg with
             | RCM (CMPlaySuccess(playedTiles, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                let st' = st // This state needs to be updated
+                let st' =
+                    {
+                        board = st.board
+                        dict = st.dict
+                        playerNumber = st.playerNumber
+                        hand = st.hand |> getRidOfTiles playedTiles |> addNewTiles newPieces
+                        placedTiles = st.placedTiles |> placeTiles playedTiles
+                    }
+                    : State.state
                 aux st'
             | RCM (CMPlayed (playerId, playedTiles, points)) ->
                 (* Successful play by other player. Update your state *)
