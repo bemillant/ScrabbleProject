@@ -88,9 +88,9 @@ module Scrabble =
             newPieces |> List.fold (fun acc (id, amount) -> MultiSet.add id amount acc) hand
 
         let rec aux (st : State.state) =
-            Print.printHand pieces (State.hand st)
 
             if st.currentPlayer = st.playerNumber then
+                Print.printHand pieces (State.hand st)
                 // remove the force print when you move on from manual input (or when you have learnt the format)
                 forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
                 let input =  System.Console.ReadLine()
