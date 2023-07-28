@@ -1,4 +1,4 @@
-module internal Dictionary
+module Dictionary
     type Dictionary
     val empty: unit -> Dictionary
     val insert: string -> Dictionary -> Dictionary

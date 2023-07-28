@@ -130,7 +130,16 @@ module Scrabble =
                 aux st'
             | RCM (CMPlayFailed (playerId, playedTiles)) ->
                 (* Failed play. Update your state *)
-                let st' = st // This state needs to be updated
+                let st' =
+                    {
+                        board = st.board
+                        dict = st.dict
+                        numberOfPlayers = st.numberOfPlayers
+                        playerNumber = st.playerNumber
+                        currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                        hand = st.hand
+                        placedTiles = st.placedTiles
+                    } : State.state
                 aux st'
             | RCM (CMGameOver _) -> ()
             | RCM (CMForfeit playerId) ->

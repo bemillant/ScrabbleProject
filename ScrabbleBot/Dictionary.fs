@@ -1,4 +1,4 @@
-module internal Dictionary
+module Dictionary
     type Dictionary =
         { map : Map<char, Dictionary>; isEndOfWord : bool }
     let empty () = { map = Map.empty; isEndOfWord = false }        
