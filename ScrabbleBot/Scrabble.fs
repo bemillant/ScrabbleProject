@@ -2,6 +2,7 @@
 
 open Parser
 open ScrabbleUtil
+open ScrabbleUtil.Dictionary
 open ScrabbleUtil.ServerCommunication
 
 open System.IO
@@ -50,10 +51,11 @@ module State =
         playerNumber  : uint32
         currentPlayer : uint32
         hand          : MultiSet.MultiSet<uint32>
-        placedTiles   : Map<coord, uint32>
+        placedTiles   : Map<coord, uint32*char*int>
+        tileLookup    : Map<uint32, tile>
     }
 
-    let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles =
+    let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles tiles =
         {
             board = board
             dict = dict
@@ -62,6 +64,7 @@ module State =
             currentPlayer = currentPlayer
             hand = hand
             placedTiles = placedTiles
+            tileLookup = tiles
         }
 
     let board st         = st.board
@@ -69,19 +72,83 @@ module State =
     let playerNumber st  = st.playerNumber
     let hand st          = st.hand
 
+module AI =
+    type PlayedTile = coord * (uint32 * (char * int))
+    type Move = PlayedTile list
+    
+    let nextMove (st:State.state) : Move = 
+            // Kald step med alle vores tilgængelig brikker eller reverse
+            // Bliv ved indtil et ord et fundet
+            
+            // let a = reverse st.dict
+    
+        let findMoveFromTile (coord:coord) (st:State.state) (horizontal:bool) : Move option =
+            let convertToMove coord (id, c, p)  = (coord, (id, (c, p)))
+            let convertToPlayedTile coord (id, (c, p)) = (coord, (id, c, p))
+            let getTile coord = st.placedTiles.[coord] |> convertToMove coord // Gets a placed tile from a coord in the format of a move. Check if the coord exists in the map first.
+            let start = Some [getTile coord] // e.g. [A]
+            
+            let getChar ((_, (_, (c, _))):PlayedTile) = c
+            
+            let coordInFront ((x, y):coord) =
+                if horizontal 
+                then (x - 1, y)
+                else (x, y - 1)
+            
+            let coordAfter ((x, y):coord) =
+                if horizontal 
+                then (x + 1, y)
+                else (x, y + 1)
+            
+            let rec findMoveAux (coord:coord) (goingBackwards:bool) (st:State.state) (playedTiles:Move option) : Move option = // This may have a different signature
+                if st.placedTiles.ContainsKey coord // Is there a tile already we can build off of?
+                then // Maybe this should be its own function
+                    let tile = getTile coord
+                    let character = getChar tile
+                    let result = step character st.dict
+                    match result with
+                    | Some (true, _) -> playedTiles |> Option.get |> List.append [tile] |> Some
+                    | Some (false, node) -> None // Implement going further in gaddag. Call findMoveAux. Node must be used somewhere here. Call to reverse / step will be necessary. 
+                    | None -> None
+                    // failwith "not implemented" // check if the tile on coord can be added to the word. Then call findMoveAux again with next coord. 
+                else
+                    // Call findMoveAux (or some other method) with each tile in hand to see if a tile can be put here to form a word
+                    failwith "not implemented"
+                                
+            findMoveAux coord true st start
+        
+        let findMoveHorizontal = Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
+        let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
+        match findMoveHorizontal with
+        | Some move -> move
+        | None ->
+            match findMoveVertical with
+            | Some move -> move
+            | None -> failwith "not implemented" // swap out tiles
+        
+        // iterate over all tiles on the board (using tryPick)
+            // go through the dictionary starting from the tile
+            // test if a node containing "isWord" can be reached given
+            // the tiles on the board and on the hand
+            // test both vertically and horizontally
+            // if a word is found using only tiles on the board
+            // (non from the hand) then the move is not valid
+            // return the first valid move found
+        // if no valid move is found, give up all tiles
+
 module Scrabble =
     open System.Threading
-    type PlayedTile = coord * (uint32 * (char * int))
     
     let playGame cstream pieces (st : State.state) =
         
         let nextPlayer numberOfPlayers currentPlayer =
             (currentPlayer % numberOfPlayers) + 1u
         
-        let placeTiles (playedTiles:PlayedTile list) (placedTiles:Map<coord, uint32>) =
-            List.fold (fun acc (coord, (id, (_, _))) -> Map.add coord id acc) placedTiles playedTiles
+        let placeTiles (playedTiles:AI.Move) (placedTiles:Map<coord, uint32 * char * int>) : Map<coord, uint32*char*int> =
+            let convertFromMoveToPlayedTiles playedTiles = List.map (fun (coord, (id, (c, p))) -> (coord, (id, c, p))) playedTiles
+            List.fold (fun acc (coord, tile) -> Map.add coord tile acc) placedTiles (convertFromMoveToPlayedTiles playedTiles)
             
-        let getRidOfTiles (playedTiles:PlayedTile list) (hand:MultiSet.MultiSet<uint32>) =
+        let getRidOfTiles (playedTiles:AI.Move) (hand:MultiSet.MultiSet<uint32>) =
             playedTiles |> List.fold (fun acc (_, (id, (_, _))) -> MultiSet.removeSingle id acc) hand
             
         let addNewTiles (newPieces:(uint32 * uint32) list) (hand:MultiSet.MultiSet<uint32>) =
@@ -113,6 +180,7 @@ module Scrabble =
                         currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
                         hand = st.hand |> getRidOfTiles playedTiles |> addNewTiles newPieces
                         placedTiles = st.placedTiles |> placeTiles playedTiles
+                        tileLookup = st.tileLookup
                     } : State.state
                 aux st'
             | RCM (CMPlayed (playerId, playedTiles, points)) ->
@@ -126,6 +194,7 @@ module Scrabble =
                         currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
                         hand = st.hand
                         placedTiles = st.placedTiles |> placeTiles playedTiles
+                        tileLookup = st.tileLookup
                     } : State.state
                 aux st'
             | RCM (CMPlayFailed (playerId, playedTiles)) ->
@@ -139,6 +208,7 @@ module Scrabble =
                         currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
                         hand = st.hand
                         placedTiles = st.placedTiles
+                        tileLookup = st.tileLookup
                     } : State.state
                 aux st'
             | RCM (CMGameOver _) -> ()
@@ -154,6 +224,7 @@ module Scrabble =
                         currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
                         hand = st.hand
                         placedTiles = st.placedTiles
+                        tileLookup = st.tileLookup
                     } : State.state
                 aux st'
             | RCM a -> failwith (sprintf "not implmented: %A" a)
@@ -186,5 +257,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict numPlayers playerNumber playerTurn handSet Map.empty)
+        fun () -> playGame cstream tiles (State.mkState board dict numPlayers playerNumber playerTurn handSet Map.empty tiles)
         

@@ -32,3 +32,6 @@ module Dictionary
             let dict2 = dict.map.[c]
             Some (dict2.isEndOfWord, dict2)
         else None
+        
+    let reverse (dict:Dictionary) : (bool * Dictionary) option =
+        failwith "not implemented"
