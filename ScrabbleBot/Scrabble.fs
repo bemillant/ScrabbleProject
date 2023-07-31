@@ -82,40 +82,43 @@ module AI =
             
             // let a = reverse st.dict
     
-        let findMoveFromTile (coord:coord) (st:State.state) (horizontal:bool) : Move option =
+        let findMoveFromTile (anchorCoord:coord) (st:State.state) (horizontal:bool) : Move option =
             let convertToMove coord (id, c, p)  = (coord, (id, (c, p)))
-            let convertToPlayedTile coord (id, (c, p)) = (coord, (id, c, p))
+            let convertToPlacedTile (coord, (id, (c, p))) = (coord, (id, c, p))
             let getTile coord = st.placedTiles.[coord] |> convertToMove coord // Gets a placed tile from a coord in the format of a move. Check if the coord exists in the map first.
-            let start = Some [getTile coord] // e.g. [A]
+            let start = Some [getTile anchorCoord] // e.g. [A]
             
             let getChar ((_, (_, (c, _))):PlayedTile) = c
             
-            let coordInFront ((x, y):coord) =
-                if horizontal 
-                then (x - 1, y)
-                else (x, y - 1)
+            let nextCoord ((x, y):coord) (prefixSearch:bool) =
+                if prefixSearch
+                then
+                    if horizontal 
+                    then (x - 1, y)
+                    else (x, y - 1)
+                else
+                    if horizontal 
+                    then (x + 1, y)
+                    else (x, y + 1)
             
-            let coordAfter ((x, y):coord) =
-                if horizontal 
-                then (x + 1, y)
-                else (x, y + 1)
-            
-            let rec findMoveAux (coord:coord) (goingBackwards:bool) (st:State.state) (playedTiles:Move option) : Move option = // This may have a different signature
+            let rec findMoveAux (coord:coord) (prefixSearch:bool) (st:State.state) (playedTiles:Move option) : Move option = // This may have a different signature
                 if st.placedTiles.ContainsKey coord // Is there a tile already we can build off of?
                 then // Maybe this should be its own function
+                    let addToMove tile = playedTiles |> Option.get |> List.append [tile] |> Some
                     let tile = getTile coord
                     let character = getChar tile
                     let result = step character st.dict
                     match result with
-                    | Some (true, _) -> playedTiles |> Option.get |> List.append [tile] |> Some
-                    | Some (false, node) -> None // Implement going further in gaddag. Call findMoveAux. Node must be used somewhere here. Call to reverse / step will be necessary. 
+                    | Some (true, _) -> addToMove tile // Success: word found
+                    | Some (false, node) -> failwith "not implemented"
+                    // Implement going further in gaddag. Call findMoveAux. Node must be used somewhere here. Call to reverse / step will be necessary. 
+                    // While adding prefixes, all placed tiles in front of letter must be included successively. 
                     | None -> None
-                    // failwith "not implemented" // check if the tile on coord can be added to the word. Then call findMoveAux again with next coord. 
                 else
                     // Call findMoveAux (or some other method) with each tile in hand to see if a tile can be put here to form a word
                     failwith "not implemented"
                                 
-            findMoveAux coord true st start
+            findMoveAux anchorCoord true st start
         
         let findMoveHorizontal = Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
         let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
