@@ -51,7 +51,7 @@ module State =
         playerNumber  : uint32
         currentPlayer : uint32
         hand          : MultiSet.MultiSet<uint32>
-        placedTiles   : Map<coord, uint32*char*int>
+        placedTiles   : Map<coord, uint32*(char*int)>
         tileLookup    : Map<uint32, tile>
     }
 
@@ -83,9 +83,7 @@ module AI =
             // let a = reverse st.dict
     
         let findMoveFromTile (anchorCoord:coord) (st:State.state) (horizontal:bool) : Move option =
-            let convertToMove coord (id, c, p)  = (coord, (id, (c, p)))
-            let convertToPlacedTile (coord, (id, (c, p))) = (coord, (id, c, p))
-            let getTile coord = st.placedTiles.[coord] |> convertToMove coord // Gets a placed tile from a coord in the format of a move. Check if the coord exists in the map first.
+            let getTile coord = st.placedTiles.[coord] // Gets a placed tile from a coord in the format of a move. Check if the coord exists in the map first.
             let start = Some [getTile anchorCoord] // e.g. [A]
             
             let getChar ((_, (_, (c, _))):PlayedTile) = c
@@ -103,34 +101,35 @@ module AI =
                     
             // This may have a different signature.
             // State should probably not change during the function
-            let rec findMoveAux (coord:coord) (prefixSearch:bool) (st:State.state) (dict:Dict) (playedTiles:Move option) : Move option = 
-                if st.placedTiles.ContainsKey coord // Is there a tile already we can build off of?
-                then // Maybe this should be its own function
-                    let addToMove tile = playedTiles |> Option.get |> List.append [tile] |> Some
-                    let tile = getTile coord
-                    let character = getChar tile
-                    let result = step character dict
-                    match result with
-                    | Some (true, _) -> addToMove tile // Success: word found
-                    | Some (false, node) -> failwith "not implemented"
-                    // Implement going further in gaddag. Call findMoveAux. Node must be used somewhere here. Call to reverse / step will be necessary. 
-                    // While adding prefixes, all placed tiles in front of letter must be included successively. 
-                    | None -> None
-                else
-                    // Call findMoveAux (or some other method) with each tile in hand to see if a tile can be put here to form a word
-                    let availableTiles = failwith "not implemented" // This is a list of tiles (id, (char, point)) to used in the move.
-                    let validTiles =
-                        availableTiles
-                        |> List.map (fun (_, (c, _)) -> step c dict)
-                        |> List.filter (fun result ->
-                            match result with
-                            | Some _ -> true
-                            | None -> false
-                            ) // If the result finishes the word, the move should be instantly returned
-                    // availableTiles |> List.tryPick (findMoveAux (nextCoord prefixSearch) prefixSearch st dict validContinuation)
-                    failwith "not implemented"
+            // let rec findMoveAux (coord:coord) (prefixSearch:bool) (st:State.state) (dict:Dict) (playedTiles:Move option) : Move option = 
+            //     if st.placedTiles.ContainsKey coord // Is there a tile already we can build off of?
+            //     then // Maybe this should be its own function
+            //         let addToMove tile = playedTiles |> Option.get |> List.append [tile] |> Some
+            //         let tile = getTile coord
+            //         let character = getChar tile
+            //         let result = step character dict
+            //         match result with
+            //         | Some (true, _) -> addToMove tile // Success: word found
+            //         | Some (false, node) -> failwith "not implemented"
+            //         // Implement going further in gaddag. Call findMoveAux. Node must be used somewhere here. Call to reverse / step will be necessary. 
+            //         // While adding prefixes, all placed tiles in front of letter must be included successively. 
+            //         | None -> None
+            //     else
+            //         // Call findMoveAux (or some other method) with each tile in hand to see if a tile can be put here to form a word
+            //         let availableTiles = failwith "not implemented" // This is a list of tiles (id, (char, point)) to used in the move.
+            //         let validTiles =
+            //             availableTiles
+            //             |> List.map (fun (_, (c, _)) -> step c dict)
+            //             |> List.filter (fun result ->
+            //                 match result with
+            //                 | Some _ -> true
+            //                 | None -> false
+            //                 ) // If the result finishes the word, the move should be instantly returned
+            //         // availableTiles |> List.tryPick (findMoveAux (nextCoord prefixSearch) prefixSearch st dict validContinuation)
+            //         failwith "not implemented"
                         
-            findMoveAux anchorCoord true st st.dict start
+            // findMoveAux anchorCoord true st st.dict start
+            failwith "not implemented"
         
         let findMoveHorizontal = Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
         let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
@@ -159,9 +158,10 @@ module Scrabble =
         let nextPlayer numberOfPlayers currentPlayer =
             (currentPlayer % numberOfPlayers) + 1u
         
-        let placeTiles (playedTiles:AI.Move) (placedTiles:Map<coord, uint32 * char * int>) : Map<coord, uint32*char*int> =
+        let placeTiles (playedTiles:AI.Move) (placedTiles:Map<coord, uint32 * (char * int)>) =
             let convertFromMoveToPlayedTiles playedTiles = List.map (fun (coord, (id, (c, p))) -> (coord, (id, c, p))) playedTiles
-            List.fold (fun acc (coord, tile) -> Map.add coord tile acc) placedTiles (convertFromMoveToPlayedTiles playedTiles)
+            List.fold (fun acc (coord, (id, (c, p))) ->
+                Map.add coord (id, (c, p)) acc) placedTiles playedTiles
             
         let getRidOfTiles (playedTiles:AI.Move) (hand:MultiSet.MultiSet<uint32>) =
             playedTiles |> List.fold (fun acc (_, (id, (_, _))) -> MultiSet.removeSingle id acc) hand
