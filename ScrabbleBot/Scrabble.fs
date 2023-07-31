@@ -76,17 +76,7 @@ module AI =
     type Move = PlayedTile list
 
     let nextMove (st: State.state) : Move =
-        // Kald step med alle vores tilgængelig brikker eller reverse
-        // Bliv ved indtil et ord et fundet
-
-        // let a = reverse st.dict
-
         let findMoveFromTile (anchorCoord: coord) (st: State.state) (horizontal: bool) : Move option =
-            let getTile coord = st.placedTiles.[coord] // Gets a placed tile from a coord in the format of a move. Check if the coord exists in the map first.
-            let start = Some [ getTile anchorCoord ] // e.g. [A]
-
-            let getChar ((_, (_, (c, _))): PlayedTile) = c
-
             let nextCoord ((x, y): coord) (prefixSearch: bool) =
                 if prefixSearch then
                     if horizontal
@@ -131,6 +121,7 @@ module AI =
                                 | None -> None
                 tile |> Set.toList |> List.tryPick (fun tileElement -> buildWordFromTile tileElement)
             
+            // Initialize search 
             let extractedStartCharacter =
                 let extract = fun (id, (c, p)) -> c
                 extract st.placedTiles.[anchorCoord] 
@@ -150,37 +141,6 @@ module AI =
             //else
             //If we get a sub-node, call step again with a char
             //if we get None -> none
-
-            // This may have a different signature.
-            // State should probably not change during the function
-            // let rec findMoveAux (coord:coord) (prefixSearch:bool) (st:State.state) (dict:Dict) (playedTiles:Move option) : Move option =
-            //     if st.placedTiles.ContainsKey coord // Is there a tile already we can build off of?
-            //     then // Maybe this should be its own function
-            //         let addToMove tile = playedTiles |> Option.get |> List.append [tile] |> Some
-            //         let tile = getTile coord
-            //         let character = getChar tile
-            //         let result = step character dict
-            //         match result with
-            //         | Some (true, _) -> addToMove tile // Success: word found
-            //         | Some (false, node) -> failwith "not implemented"
-            //         // Implement going further in gaddag. Call findMoveAux. Node must be used somewhere here. Call to reverse / step will be necessary.
-            //         // While adding prefixes, all placed tiles in front of letter must be included successively.
-            //         | None -> None
-            //     else
-            //         // Call findMoveAux (or some other method) with each tile in hand to see if a tile can be put here to form a word
-            //         let availableTiles = failwith "not implemented" // This is a list of tiles (id, (char, point)) to used in the move.
-            //         let validTiles =
-            //             availableTiles
-            //             |> List.map (fun (_, (c, _)) -> step c dict)
-            //             |> List.filter (fun result ->
-            //                 match result with
-            //                 | Some _ -> true
-            //                 | None -> false
-            //                 ) // If the result finishes the word, the move should be instantly returned
-            //         // availableTiles |> List.tryPick (findMoveAux (nextCoord prefixSearch) prefixSearch st dict validContinuation)
-            //         failwith "not implemented"
-
-            // findMoveAux anchorCoord true st st.dict start
 
         let findMoveHorizontal =
             Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
