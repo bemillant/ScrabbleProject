@@ -100,14 +100,16 @@ module AI =
                     if horizontal 
                     then (x + 1, y)
                     else (x, y + 1)
-            
-            let rec findMoveAux (coord:coord) (prefixSearch:bool) (st:State.state) (playedTiles:Move option) : Move option = // This may have a different signature
+                    
+            // This may have a different signature.
+            // State should probably not change during the function
+            let rec findMoveAux (coord:coord) (prefixSearch:bool) (st:State.state) (dict:Dict) (playedTiles:Move option) : Move option = 
                 if st.placedTiles.ContainsKey coord // Is there a tile already we can build off of?
                 then // Maybe this should be its own function
                     let addToMove tile = playedTiles |> Option.get |> List.append [tile] |> Some
                     let tile = getTile coord
                     let character = getChar tile
-                    let result = step character st.dict
+                    let result = step character dict
                     match result with
                     | Some (true, _) -> addToMove tile // Success: word found
                     | Some (false, node) -> failwith "not implemented"
@@ -116,9 +118,19 @@ module AI =
                     | None -> None
                 else
                     // Call findMoveAux (or some other method) with each tile in hand to see if a tile can be put here to form a word
+                    let availableTiles = failwith "not implemented" // This is a list of tiles (id, (char, point)) to used in the move.
+                    let validTiles =
+                        availableTiles
+                        |> List.map (fun (_, (c, _)) -> step c dict)
+                        |> List.filter (fun result ->
+                            match result with
+                            | Some _ -> true
+                            | None -> false
+                            ) // If the result finishes the word, the move should be instantly returned
+                    // availableTiles |> List.tryPick (findMoveAux (nextCoord prefixSearch) prefixSearch st dict validContinuation)
                     failwith "not implemented"
-                                
-            findMoveAux anchorCoord true st start
+                        
+            findMoveAux anchorCoord true st st.dict start
         
         let findMoveHorizontal = Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
         let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
