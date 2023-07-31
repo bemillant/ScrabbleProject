@@ -130,11 +130,18 @@ module AI =
                                     | None -> None
                                 | None -> None
                 tile |> Set.toList |> List.tryPick (fun tileElement -> buildWordFromTile tileElement)
-            let startingDict = failwith "not implemented" // Use tileLookup.[coord] and (Dictionary.step st.dict)
-            let startingMove = failwith "not implemented" // Convert coord to move
-            st.hand |> MultiSet.toList |> List.tryPick (fun tileId ->
-                let updatedHand = st.hand |> MultiSet.removeSingle tileId
-                buildWord tileId startingDict startingMove updatedHand false)
+            
+            let extractedStartCharacter =
+                let extract = fun (id, (c, p)) -> c
+                extract st.placedTiles.[anchorCoord] 
+            let startingMove = Some [anchorCoord, st.placedTiles.[anchorCoord]] // Convert coord to move
+            let check = step extractedStartCharacter st.dict
+            match check with
+            | None -> None
+            | Some (_, startingDict) -> 
+                st.hand |> MultiSet.toList |> List.tryPick (fun tileId ->
+                    let updatedHand = st.hand |> MultiSet.removeSingle tileId
+                    buildWord tileId startingDict startingMove updatedHand false)
             // buildWord startingTileId st.dict startingMove st.hand false
             //Recursive method to call after having called reverse
             //Maybe jump coord back to start?
