@@ -89,11 +89,13 @@ module AI =
 
             let nextCoord ((x, y): coord) (prefixSearch: bool) =
                 if prefixSearch then
-                    if horizontal then (x - 1, y) else (x, y - 1)
-                else if horizontal then
-                    (x + 1, y)
+                    if horizontal
+                    then (x - 1, y)
+                    else (x, y - 1)
                 else
-                    (x, y + 1)
+                    if horizontal
+                    then (x + 1, y)
+                    else (x, y + 1)
 
             //Recursive function that attempts to build a word, tile by tile.
             //First step with a char and node and checks if this completes a word
@@ -103,19 +105,20 @@ module AI =
             //If we do not get a sub-node (None) then call reverse
             //if reverse = Move -> move
             //elif reverse = None -> None
-            let rec buildWord (tileId:uint32) (node:Dict) (accMove:Move option) (hand:uint32 list) (hasBeenReversed:bool) : Move option =
+            let rec buildWord (tileId:uint32) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) : Move option =
                 // tileA = { (A, 1) }
                 // tileWild { (A, 0), (B, 0) ... (Z, 0) }
                 let tile = st.tileLookup.[tileId]
                 let buildWordFromTile (tileElement:char*int) =
-                    let extractedCharacter = failwith "not implemented"
+                    let extractedCharacter = fst tileElement
                     let check = step extractedCharacter node
-                    let updatedMove = failwith "not implemented"
+                    
+                    let updatedMove = accMove |> Option.get |> List.append [(0,0),(tileId, tileElement)] |> Some // Add coord instead of 0,0
                     match check with
                     | Some (true, _) -> updatedMove //If the we have found a word, simply return the accumilated word
                     | Some (false, nextNode) ->
-                            let updatedHand = failwith "not implemented"
-                            hand |> List.tryPick (fun tileId -> buildWord tileId nextNode updatedMove updatedHand hasBeenReversed)
+                            let updatedHand = hand |> MultiSet.removeSingle tileId
+                            hand |> MultiSet.toList |> List.tryPick (fun tileId -> buildWord tileId nextNode updatedMove updatedHand hasBeenReversed)
                     | None ->
                             if hasBeenReversed then None
                             else
@@ -127,7 +130,12 @@ module AI =
                                     | None -> None
                                 | None -> None
                 tile |> Set.toList |> List.tryPick (fun tileElement -> buildWordFromTile tileElement)
-            failwith "not implemented"
+            let startingDict = failwith "not implemented" // Use tileLookup.[coord] and (Dictionary.step st.dict)
+            let startingMove = failwith "not implemented" // Convert coord to move
+            st.hand |> MultiSet.toList |> List.tryPick (fun tileId ->
+                let updatedHand = st.hand |> MultiSet.removeSingle tileId
+                buildWord tileId startingDict startingMove updatedHand false)
+            // buildWord startingTileId st.dict startingMove st.hand false
             //Recursive method to call after having called reverse
             //Maybe jump coord back to start?
             //Call step on (anchor?) node
