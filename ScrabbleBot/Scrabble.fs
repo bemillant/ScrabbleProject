@@ -173,9 +173,6 @@ module Scrabble =
         let nextPlayer numberOfPlayers currentPlayer = (currentPlayer % numberOfPlayers) + 1u
 
         let placeTiles (playedTiles: AI.Move) (placedTiles: Map<coord, uint32 * (char * int)>) =
-            let convertFromMoveToPlayedTiles playedTiles =
-                List.map (fun (coord, (id, (c, p))) -> (coord, (id, c, p))) playedTiles
-
             List.fold (fun acc (coord, (id, (c, p))) -> Map.add coord (id, (c, p)) acc) placedTiles playedTiles
 
         let getRidOfTiles (playedTiles: AI.Move) (hand: MultiSet.MultiSet<uint32>) =
