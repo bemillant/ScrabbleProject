@@ -103,29 +103,31 @@ module AI =
             //If we do not get a sub-node (None) then call reverse
             //if reverse = Move -> move
             //elif reverse = None -> None
-            let rec buildWord c node accMove hand hasBeenReversed : Move option =
-                let check = step c node
-
-                match check with
-                | Some(b, _) when b -> accMove //If the we have found a word, simply return the accumilated word
-                | Some(_, n) ->
-                    match hand with
-                    | [] -> None //If we have exhausted the hand then no word was found in this branch
-                    | c :: restHand -> buildWord c n (accMove :: c) restHand false //We now try again with a tile from the hand. We append the tile to the wordBuilder-List (NEED TO FORMAT SUCH THAT IT FITS)
-                | None ->
-                    if hasBeenReversed then
-                        None
-                    else
-                        let check = buildWord c (reverse node) accMove hand true
-
-                        match check with
-                        | Some move -> Some move
-                        | None -> None
-
-
-            //Try pick on handTiles
-
-
+            let rec buildWord (tileId:uint32) (node:Dict) (accMove:Move option) (hand:uint32 list) (hasBeenReversed:bool) : Move option =
+                // tileA = { (A, 1) }
+                // tileWild { (A, 0), (B, 0) ... (Z, 0) }
+                let tile = st.tileLookup.[tileId]
+                let buildWordFromTile (tileElement:char*int) =
+                    let extractedCharacter = failwith "not implemented"
+                    let check = step extractedCharacter node
+                    let updatedMove = failwith "not implemented"
+                    match check with
+                    | Some (true, _) -> updatedMove //If the we have found a word, simply return the accumilated word
+                    | Some (false, nextNode) ->
+                            let updatedHand = failwith "not implemented"
+                            hand |> List.tryPick (fun tileId -> buildWord tileId nextNode updatedMove updatedHand hasBeenReversed)
+                    | None ->
+                            if hasBeenReversed then None
+                            else
+                                match reverse node with
+                                | Some (_, reverseNode) -> // Never completes a word
+                                    let check = buildWord tileId reverseNode accMove hand true
+                                    match check with
+                                    | Some move -> Some move
+                                    | None -> None
+                                | None -> None
+                tile |> Set.toList |> List.tryPick (fun tileElement -> buildWordFromTile tileElement)
+            failwith "not implemented"
             //Recursive method to call after having called reverse
             //Maybe jump coord back to start?
             //Call step on (anchor?) node
@@ -164,7 +166,6 @@ module AI =
             //         failwith "not implemented"
 
             // findMoveAux anchorCoord true st st.dict start
-            failwith "not implemented"
 
         let findMoveHorizontal =
             Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
