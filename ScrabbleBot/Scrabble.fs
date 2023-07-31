@@ -122,11 +122,11 @@ module AI =
                 tile |> Set.toList |> List.tryPick (fun tileElement -> buildWordFromTile tileElement)
             
             // Initialize search 
-            let extractedStartCharacter =
+            let startingCharacter =
                 let extract = fun (id, (c, p)) -> c
                 extract st.placedTiles.[anchorCoord] 
             let startingMove = Some [anchorCoord, st.placedTiles.[anchorCoord]] // Convert coord to move
-            let check = step extractedStartCharacter st.dict
+            let check = step startingCharacter st.dict
             match check with
             | None -> None
             | Some (_, startingDict) -> 
