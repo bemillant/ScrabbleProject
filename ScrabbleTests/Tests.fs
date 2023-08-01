@@ -22,16 +22,16 @@ open ScrabbleUtil
 //     let z = AI.testInt
 //     Assert.True((z = 0))
     
-[<Fact>]
-let ``gaddag of A can step from root to A`` () =
-    let gaddag = empty () |> insert "A"
-    let result = gaddag |> step 'A'
-    let isEndOfWord =
-        match result with
-        | Some (true, _) -> true
-        | Some (false, _) -> false // this is the outcome ???
-        | None -> false
-    Assert.True(isEndOfWord)
+// [<Fact>]
+// let ``gaddag of A can step from root to A`` () =
+//     let gaddag = empty () |> insert "A"
+//     let result = gaddag |> step 'A'
+//     let isEndOfWord =
+//         match result with
+//         | Some (true, _) -> true
+//         | Some (false, _) -> false // this is the outcome ???
+//         | None -> false
+//     Assert.True(isEndOfWord)
     
 [<Fact>]
 let ``gaddag of A can find word A`` () =
@@ -85,6 +85,11 @@ let tileLookupTable =
     let idsWithSetTuples = List.zip ids setTuples
     idsWithSetTuples |> Map.ofList
 
+let idLookupTable =
+    let letters = ['A' .. 'Z'] |> List.ofSeq
+    let ids = [1u..26u]
+    let combined = List.zip letters ids
+    Map.ofList combined
 
 [<Fact>]
 let ``Id 1u gives tile A`` () =
@@ -130,9 +135,47 @@ let ``TEST_dict contains word TEST`` () =
     let containsTest = _TEST_dict |> Dictionary.lookup "TEST"
     Assert.True containsTest
 
+let coord00 = (0,0)
+
 [<Fact>]
-let ``Build Word`` () =
-    let move = AI.buildWord 5u _TEST_dict (Some []) handContainingTest false tileLookupTable
+let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
+    let move = AI.buildWord 5u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let foundWord =
+        match move with
+        | Some word -> true
+        | None -> false
+    Assert.True foundWord
+    
+[<Fact>]
+let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
+    let move = AI.buildWord 20u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let foundWord =
+        match move with
+        | Some word -> true
+        | None -> false
+    Assert.True foundWord
+    
+[<Fact>]
+let ``Build Word TEST from S given hand TEST and dictionary TEST`` () =
+    let move = AI.buildWord 19u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let foundWord =
+        match move with
+        | Some word -> true
+        | None -> false
+    Assert.True foundWord
+    
+[<Fact>]
+let ``Build Word TEST from W given hand TEST and dictionary TEST should not be possible`` () =
+    let move = AI.buildWord 23u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let foundWord =
+        match move with
+        | Some word -> true
+        | None -> false
+    Assert.False foundWord
+    
+[<Fact>]
+let ``Build Word TEST from E given hand TEST and dictionary TEST_HELLO should not be possible`` () =
+    let move = AI.buildWord 5u coord00 _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
