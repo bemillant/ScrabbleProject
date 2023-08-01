@@ -29,10 +29,10 @@ module AI =
      if reverse = Move -> move
      elif reverse = None -> None 
     *)
-    let rec buildWord  (tileId:uint32) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) (st: State.state) : Move option =
+    let rec buildWord  (tileId:uint32) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) (tileMap: Map<uint32,tile>) : Move option =
         // tileA = { (A, 1) }
         // tileWild { (A, 0), (B, 0) ... (Z, 0) }
-        let tile = st.tileLookup.[tileId]
+        let tile = tileMap.[tileId]
         let buildWordFromTile (tileElement:char*int) =
             let extractedCharacter = fst tileElement
             let check = step extractedCharacter node
@@ -42,13 +42,13 @@ module AI =
             | Some (true, _) -> updatedMove //If the we have found a word, simply return the accumilated word
             | Some (false, nextNode) ->
                     let updatedHand = hand |> MultiSet.removeSingle tileId
-                    hand |> MultiSet.toList |> List.tryPick (fun tileId -> buildWord tileId nextNode updatedMove updatedHand hasBeenReversed st )
+                    hand |> MultiSet.toList |> List.tryPick (fun tileId -> buildWord tileId nextNode updatedMove updatedHand hasBeenReversed tileMap )
             | None ->
                     if hasBeenReversed then None
                     else
                         match reverse node with
                         | Some (_, reverseNode) -> // Never completes a word
-                            let check = buildWord tileId reverseNode accMove hand true st
+                            let check = buildWord tileId reverseNode accMove hand true tileMap
                             match check with
                             | Some move -> Some move
                             | None -> None
@@ -67,7 +67,7 @@ module AI =
             | Some (_, startingDict) -> 
                 st.hand |> MultiSet.toList |> List.tryPick (fun tileId ->
                     let updatedHand = st.hand |> MultiSet.removeSingle tileId
-                    buildWord tileId startingDict startingMove updatedHand false st )
+                    buildWord tileId startingDict startingMove updatedHand false st.tileLookup )
 
     let nextMove (st: State.state) : Move =
         let findMoveHorizontal =

@@ -12,4 +12,4 @@ module AI =
     val nextCoord: coord -> bool -> bool -> coord
 
     val buildWord:
-        uint32 -> Dictionary.Dict -> Move option -> MultiSet.MultiSet<uint32> -> bool -> State.state -> Move option
+        uint32 -> Dictionary.Dict -> Move option -> MultiSet.MultiSet<uint32> -> bool -> Map<uint32,tile> -> Move option
