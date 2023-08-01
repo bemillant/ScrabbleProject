@@ -22,16 +22,16 @@ open ScrabbleUtil
 //     let z = AI.testInt
 //     Assert.True((z = 0))
     
-// [<Fact>]
-// let ``gaddag of A can step from root to A`` () =
-//     let gaddag = empty () |> insert "A"
-//     let result = gaddag |> step 'A'
-//     let isEndOfWord =
-//         match result with
-//         | Some (true, _) -> true
-//         | Some (false, _) -> false // this is the outcome ???
-//         | None -> false
-//     Assert.True(isEndOfWord)
+[<Fact>]
+let ``gaddag of A can step from root to A`` () =
+    let gaddag = empty () |> insert "A"
+    let result = gaddag |> step 'A'
+    let isEndOfWord =
+        match result with
+        | Some (true, _) -> true
+        | Some (false, _) -> false // this is the outcome ???
+        | None -> false
+    Assert.True(isEndOfWord)
     
 [<Fact>]
 let ``gaddag of A can find word A`` () =
@@ -96,7 +96,7 @@ let ``Id 1u gives tile A`` () =
 // add id amount 
 let handContainingTest = MultiSet.empty |> add 20u 2u |> add 5u 1u |> add 19u 1u
 
-let words = seq { "HELLO"; "TEST" }
+let words_HELLO_TEST = seq { "HELLO"; "TEST" }
 let time f =
     let start = System.DateTime.Now
     let res = f ()
@@ -104,13 +104,35 @@ let time f =
     (res, finish - start)
     
 let dictAPI = Some(empty, insert, step, Some reverse)
-let (dictionary, _) =
-    time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
-let _HELLO_TEST_dict = dictionary true
+let (dictionary_HELLO_TEST, _) =
+    time (fun () -> ScrabbleUtil.Dictionary.mkDict words_HELLO_TEST dictAPI)
+let _HELLO_TEST_dict = dictionary_HELLO_TEST true
+
+
+let words_TEST = seq { "TEST" }
+let (dictionary_TEST, _) =
+    time (fun () -> ScrabbleUtil.Dictionary.mkDict words_TEST dictAPI)
+let _TEST_dict = dictionary_TEST true
+
+[<Fact>]
+let ``_HELLO_TEST_dict contains word HELLO`` () =
+    let containsHello = _HELLO_TEST_dict |> Dictionary.lookup "HELLO"
+    Assert.True containsHello
+
+[<Fact>]
+let ``_HELLO_TEST_dict contains word TEST`` () =
+    let containsHello = _HELLO_TEST_dict |> Dictionary.lookup "TEST"
+    Assert.True containsHello
+
+
+[<Fact>]
+let ``TEST_dict contains word TEST`` () =
+    let containsTest = _TEST_dict |> Dictionary.lookup "TEST"
+    Assert.True containsTest
 
 [<Fact>]
 let ``Build Word`` () =
-    let move = AI.buildWord 8u _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable
+    let move = AI.buildWord 5u _TEST_dict (Some []) handContainingTest false tileLookupTable
     let foundWord =
         match move with
         | Some word -> true
