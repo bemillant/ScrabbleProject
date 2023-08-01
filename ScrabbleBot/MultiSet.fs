@@ -1,4 +1,4 @@
-﻿module internal MultiSet
+﻿module MultiSet
     type MultiSet<'a when 'a : comparison> = { map : Map<'a, uint32>; size : uint32}
     let empty : MultiSet<'a> = { map = Map.empty; size = 0u }
     let isEmpty (multiSet:MultiSet<'a>) : bool = multiSet.size = 0u
