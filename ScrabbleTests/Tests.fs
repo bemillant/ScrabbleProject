@@ -96,11 +96,23 @@ let ``Id 1u gives tile A`` () =
 // add id amount 
 let handContainingTest = MultiSet.empty |> add 20u 2u |> add 5u 1u |> add 19u 1u
 
-let dictAPI = Some(Dictionary.empty, Dictionary.insert, Dictionary.step, Some Dictionary.reverse)
 let words = seq { "HELLO"; "TEST" }
-let dictionary = ScrabbleUtil.Dictionary.mkDict words dictAPI false
-
+let time f =
+    let start = System.DateTime.Now
+    let res = f ()
+    let finish = System.DateTime.Now
+    (res, finish - start)
+    
+let dictAPI = Some(empty, insert, step, Some reverse)
+let (dictionary, _) =
+    time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
+let _HELLO_TEST_dict = dictionary true
 
 [<Fact>]
 let ``Build Word`` () =
-    AI.buildWord 8u helloGaddag (Some []) handContainingTest false tileLookupTable
+    let move = AI.buildWord 8u _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable
+    let foundWord =
+        match move with
+        | Some word -> true
+        | None -> false
+    Assert.True foundWord
