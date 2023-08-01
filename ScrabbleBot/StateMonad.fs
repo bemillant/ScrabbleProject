@@ -1,4 +1,4 @@
-﻿module internal StateMonad
+﻿module StateMonad
 
     type Error = 
         | VarExists of string

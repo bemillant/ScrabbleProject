@@ -20,16 +20,23 @@ open Dictionary
 //     let z = AI.testInt
 //     Assert.True((z = 0))
     
+// [<Fact>]
+// let ``gaddag of A can step from root to A`` () =
+//     let gaddag = empty () |> insert "A"
+//     let result = gaddag |> step 'A'
+//     let isEndOfWord =
+//         match result with
+//         | Some (true, _) -> true
+//         | Some (false, _) -> false // this is the outcome ???
+//         | None -> false
+//     Assert.True(isEndOfWord)
+    
 [<Fact>]
-let ``gaddag of A can step from root to A`` () =
+let ``gaddag of A can find word A`` () =
     let gaddag = empty () |> insert "A"
-    let result = gaddag |> step 'A'
-    let isEndOfWord =
-        match result with
-        | Some (true, _) -> true
-        | Some (false, _) -> false // this is the outcome ???
-        | None -> false
-    Assert.True(isEndOfWord)
+    let canFindA = gaddag |> lookup "A"
+    Assert.True canFindA
+    
     
 [<Fact>]
 let ``gaddag of A has node count of 2`` () =

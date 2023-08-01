@@ -1,5 +1,5 @@
 
-module internal State
+module State
     open ScrabbleUtil
     
     type state =
