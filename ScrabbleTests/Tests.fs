@@ -1,9 +1,11 @@
 module Tests
 
 open System
+open MultiSet
 open Xunit
 open Zyzzyva
 open Dictionary
+open ScrabbleUtil
 // open MultiSet
 
 // [<Fact>]
@@ -67,4 +69,38 @@ let helloOnBoard = List.zip fiveLetterWordCoordinates helloTiles |> Map.ofList /
 [<Fact>]
 let ``Board containing HELLO has 5 tiles`` () =
     Assert.True (helloOnBoard.Count = 5)
+
+let helloGaddag = empty () |> insert "HELLO"
+
+[<Fact>]
+let ``gaddag containing HELLO can look up HELLO`` () =
+    let canFindHello = helloGaddag |> lookup "HELLO"
+    Assert.True canFindHello
     
+let tileLookupTable =
+    let ids = [1u..26u]
+    let letters = ['A' .. 'Z'] |> List.ofSeq
+    let tuples = letters |> List.map (fun letter -> (letter, 1))
+    let setTuples = tuples |> List.map (fun tuple -> Set.singleton tuple)
+    let idsWithSetTuples = List.zip ids setTuples
+    idsWithSetTuples |> Map.ofList
+
+
+[<Fact>]
+let ``Id 1u gives tile A`` () =
+    let tileA = tileLookupTable.[1u]
+    let A = tileA |> Set.maxElement |> fst
+    Assert.True ((A = 'A'))
+   
+// T:20 E:5 S:19 T:20
+// add id amount 
+let handContainingTest = MultiSet.empty |> add 20u 2u |> add 5u 1u |> add 19u 1u
+
+let dictAPI = Some(Dictionary.empty, Dictionary.insert, Dictionary.step, Some Dictionary.reverse)
+let words = seq { "HELLO"; "TEST" }
+let dictionary = ScrabbleUtil.Dictionary.mkDict words dictAPI false
+
+
+[<Fact>]
+let ``Build Word`` () =
+    AI.buildWord 8u helloGaddag (Some []) handContainingTest false tileLookupTable

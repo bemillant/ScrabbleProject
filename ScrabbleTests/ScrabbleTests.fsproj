@@ -27,6 +27,13 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ScrabbleBot\ScrabbleBot.fsproj" />
+      <ProjectReference Include="..\ScrabbleTemplate\ScrabbleTemplate.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="ScrabbleUtil">
+        <HintPath>bin\Debug\net7.0\ScrabbleUtil.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>
