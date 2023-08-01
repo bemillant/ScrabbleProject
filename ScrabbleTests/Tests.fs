@@ -76,6 +76,12 @@ let helloGaddag = empty () |> insert "HELLO"
 let ``gaddag containing HELLO can look up HELLO`` () =
     let canFindHello = helloGaddag |> lookup "HELLO"
     Assert.True canFindHello
+
+let wildcardTile =
+    let letters = ['A' .. 'Z'] |> List.ofSeq
+    let tuples = letters |> List.map (fun letter -> (letter, 0))
+    let set = Set.ofList tuples
+    (0u, set)
     
 let tileLookupTable =
     let ids = [1u..26u]
@@ -83,12 +89,13 @@ let tileLookupTable =
     let tuples = letters |> List.map (fun letter -> (letter, 1))
     let setTuples = tuples |> List.map (fun tuple -> Set.singleton tuple)
     let idsWithSetTuples = List.zip ids setTuples
-    idsWithSetTuples |> Map.ofList
+    let tiles = idsWithSetTuples @ [wildcardTile]    
+    tiles |> Map.ofList
 
 let idLookupTable =
     let letters = ['A' .. 'Z'] |> List.ofSeq
     let ids = [1u..26u]
-    let combined = List.zip letters ids
+    let combined = List.zip letters ids |> List.append ['*', 0u]
     Map.ofList combined
 
 [<Fact>]
@@ -99,7 +106,7 @@ let ``Id 1u gives tile A`` () =
    
 // T:20 E:5 S:19 T:20
 // add id amount 
-let handContainingTest = MultiSet.empty |> add 20u 2u |> add 5u 1u |> add 19u 1u
+let handContainingTest = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingle idLookupTable.['E'] |> addSingle idLookupTable.['S']
 
 let words_HELLO_TEST = seq { "HELLO"; "TEST" }
 let time f =
@@ -139,7 +146,7 @@ let coord00 = (0,0)
 
 [<Fact>]
 let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
-    let move = AI.buildWord 5u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let move = AI.buildWord idLookupTable.['E'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
@@ -148,7 +155,7 @@ let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
     
 [<Fact>]
 let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
-    let move = AI.buildWord 20u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
@@ -157,7 +164,7 @@ let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
     
 [<Fact>]
 let ``Build Word TEST from S given hand TEST and dictionary TEST`` () =
-    let move = AI.buildWord 19u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let move = AI.buildWord idLookupTable.['S'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
@@ -166,7 +173,7 @@ let ``Build Word TEST from S given hand TEST and dictionary TEST`` () =
     
 [<Fact>]
 let ``Build Word TEST from W given hand TEST and dictionary TEST should not be possible`` () =
-    let move = AI.buildWord 23u coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let move = AI.buildWord idLookupTable.['W'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
@@ -174,8 +181,19 @@ let ``Build Word TEST from W given hand TEST and dictionary TEST should not be p
     Assert.False foundWord
     
 [<Fact>]
-let ``Build Word TEST from E given hand TEST and dictionary TEST_HELLO should not be possible`` () =
-    let move = AI.buildWord 5u coord00 _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+let ``Build Word TEST from E given hand TEST and dictionary TEST_HELLO`` () =
+    let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let foundWord =
+        match move with
+        | Some word -> true
+        | None -> false
+    Assert.True foundWord
+
+let wildcardHand = MultiSet.empty |> add idLookupTable.['*'] 4u
+
+[<Fact>] // * = wildcard
+let ``Build Word TEST from E given hand **** and dictionary TEST_HELLO`` () =
+    let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) wildcardHand false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
