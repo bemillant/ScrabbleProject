@@ -9,30 +9,24 @@ module AI =
     
     type PlayedTile = coord * (uint32 * (char * int))
     type Move = PlayedTile list
-    let nextCoord ((x, y): coord) (prefixSearch: bool) isHorizontal (anchorCoord: coord) =
+    let nextCoord ((x, y): coord) (prefixSearch: bool) isHorizontal ((anchorX, anchorY): coord) =
         if prefixSearch then
             if isHorizontal
             then (x - 1, y)
             else (x, y - 1)
         else
-            if isHorizontal
-            then (x + 1, y)
-            else (x, y + 1)
+            if x + y < anchorX + anchorY 
+            then if isHorizontal
+                 then (anchorX + 1, anchorY)
+                 else (anchorX, anchorY + 1)
+            else if isHorizontal
+                 then (x + 1, y)
+                 else (x, y + 1)
     let extract = fun (id, (c, p)) -> c
 
     let updateAcc (accMove: Move option) coord ((tileId:uint32), (tileElement:char*int)) = 
         accMove |> Option.get |> List.append [coord, (tileId, tileElement)] |> Some
 
-    (*
-     Recursive function that attempts to build a word, tile by tile.
-     First step with a char and node and checks if this completes a word
-     If it does -> return acc word
-     If not:
-     If we get a sub-node from the step try again with a char from hand
-     If we do not get a sub-node (None) then call reverse
-     if reverse = Move -> move
-     elif reverse = None -> None 
-    *)
     let rec buildWord  (tileId:uint32) (coord: coord) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) (tileMap: Map<uint32,tile>) (isHorizontal: bool) (anchorCoord: coord): Move option =
         // tileA = { (A, 1) }
         // tileWild { (A, 0), (B, 0) ... (Z, 0) }
