@@ -7,6 +7,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ScrabbleTemplate", "Scrabbl
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ScrabbleBot", "ScrabbleBot\ScrabbleBot.fsproj", "{10C48DD9-BC29-4ED3-B6F9-BE955ECB8B00}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ScrabbleTests", "ScrabbleTests\ScrabbleTests.fsproj", "{DEC8D8AE-59EB-41CD-B385-D7049BC4937B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{10C48DD9-BC29-4ED3-B6F9-BE955ECB8B00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10C48DD9-BC29-4ED3-B6F9-BE955ECB8B00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10C48DD9-BC29-4ED3-B6F9-BE955ECB8B00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DEC8D8AE-59EB-41CD-B385-D7049BC4937B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEC8D8AE-59EB-41CD-B385-D7049BC4937B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEC8D8AE-59EB-41CD-B385-D7049BC4937B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEC8D8AE-59EB-41CD-B385-D7049BC4937B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
