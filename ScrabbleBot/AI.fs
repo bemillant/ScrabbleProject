@@ -90,6 +90,11 @@ module AI =
             | Some move -> move
             | None -> failwith "not implemented" // swap out tiles
 
+    let findMoveFromTile = failwith "Not implemented"
+    let nextCoord = failwith "Not implemented"
+    let buildWord = failwith "Not implemented"
+
+
 // iterate over all tiles on the board (using tryPick)
 // go through the dictionary starting from the tile
 // test if a node containing "isWord" can be reached given
