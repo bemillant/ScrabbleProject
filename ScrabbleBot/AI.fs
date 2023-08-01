@@ -9,7 +9,7 @@ module AI =
     
     type PlayedTile = coord * (uint32 * (char * int))
     type Move = PlayedTile list
-    let nextCoord ((x, y): coord) (prefixSearch: bool) isHorizontal =
+    let nextCoord ((x, y): coord) (prefixSearch: bool) isHorizontal (anchorCoord: coord) =
         if prefixSearch then
             if isHorizontal
             then (x - 1, y)
@@ -19,6 +19,10 @@ module AI =
             then (x + 1, y)
             else (x, y + 1)
     let extract = fun (id, (c, p)) -> c
+
+    let updateAcc (accMove: Move option) coord ((tileId:uint32), (tileElement:char*int)) = 
+        accMove |> Option.get |> List.append [coord, (tileId, tileElement)] |> Some
+
     (*
      Recursive function that attempts to build a word, tile by tile.
      First step with a char and node and checks if this completes a word
@@ -29,26 +33,28 @@ module AI =
      if reverse = Move -> move
      elif reverse = None -> None 
     *)
-    let rec buildWord  (tileId:uint32) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) (tileMap: Map<uint32,tile>) : Move option =
+    let rec buildWord  (tileId:uint32) (coord: coord) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) (tileMap: Map<uint32,tile>) (isHorizontal: bool) (anchorCoord: coord): Move option =
         // tileA = { (A, 1) }
         // tileWild { (A, 0), (B, 0) ... (Z, 0) }
         let tile = tileMap.[tileId]
         let buildWordFromTile (tileElement:char*int) =
             let extractedCharacter = fst tileElement
             let check = step extractedCharacter node
-            
-            let updatedMove = accMove |> Option.get |> List.append [(0,0),(tileId, tileElement)] |> Some // Add coord instead of 0,0
+            let newCoord = nextCoord coord (not hasBeenReversed) isHorizontal anchorCoord
+            let updatedAccMove = updateAcc accMove newCoord (tileId, tileElement)
+
+            //let updatedMove = accMove |> Option.get |> List.append [(0,0),(tileId, tileElement)] |> Some // Add coord instead of 0,0
             match check with
-            | Some (true, _) -> updatedMove //If the we have found a word, simply return the accumilated word
+            | Some (true, _) -> updatedAccMove //If the we have found a word, simply return the accumilated word
             | Some (false, nextNode) ->
                     let updatedHand = hand |> MultiSet.removeSingle tileId
-                    hand |> MultiSet.toList |> List.tryPick (fun tileId -> buildWord tileId nextNode updatedMove updatedHand hasBeenReversed tileMap )
+                    hand |> MultiSet.toList |> List.tryPick (fun tileId -> buildWord tileId newCoord nextNode updatedAccMove updatedHand hasBeenReversed tileMap isHorizontal anchorCoord )
             | None ->
                     if hasBeenReversed then None
                     else
                         match reverse node with
                         | Some (_, reverseNode) -> // Never completes a word
-                            let check = buildWord tileId reverseNode accMove hand true tileMap
+                            let check = buildWord tileId newCoord reverseNode accMove hand true tileMap isHorizontal anchorCoord
                             match check with
                             | Some move -> Some move
                             | None -> None
@@ -67,18 +73,17 @@ module AI =
             | Some (_, startingDict) -> 
                 st.hand |> MultiSet.toList |> List.tryPick (fun tileId ->
                     let updatedHand = st.hand |> MultiSet.removeSingle tileId
-                    buildWord tileId startingDict startingMove updatedHand false st.tileLookup )
+                    buildWord tileId anchorCoord startingDict startingMove updatedHand false st.tileLookup horizontal anchorCoord )
 
+    (*First try to find moves horizontally then if no move was found, try finding a word vertically*)
     let nextMove (st: State.state) : Move =
         let findMoveHorizontal =
             Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
 
-        let findMoveVertical =
-            Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
-
         match findMoveHorizontal with
         | Some move -> move
         | None ->
+            let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
             match findMoveVertical with
             | Some move -> move
             | None -> failwith "not implemented" // swap out tiles
