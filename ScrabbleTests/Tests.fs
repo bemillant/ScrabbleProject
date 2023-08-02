@@ -199,3 +199,15 @@ let ``Build Word TEST from E given hand **** and dictionary TEST_HELLO`` () =
         | Some word -> true
         | None -> false
     Assert.True foundWord
+
+
+let handContainingTst = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingle idLookupTable.['S']
+[<Fact>]
+let ``Build Word TEST from E given hand TST and dictionary TEST_HELLO`` () =
+    let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) handContainingTst false tileLookupTable false coord00
+    let foundWordSequence =
+        match move with
+        | Some word -> true
+        | None -> false
+
+    Assert.True (foundWordSequence)
