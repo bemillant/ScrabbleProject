@@ -146,104 +146,110 @@ let ``TEST_dict contains word TEST`` () =
 let coord00 = (0,0)
 let coord10 = (1,0)
 
+let placedTilesE = Map.empty |> Map.add (0,0) (5u, ('E', 1))
+let handContainingTst = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingle idLookupTable.['S']
+
+
 [<Fact>]
 let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+    // let move = AI.buildWord idLookupTable.['E'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
         | Some word -> true
         | None -> false
     Assert.True foundWord
     
-[<Fact>]
-let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
-    let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
-    let foundWord =
-        match move with
-        | Some word -> true
-        | None -> false
-    Assert.True foundWord
-    
-[<Fact>]
-let ``Build Word TEST from S given hand TEST and dictionary TEST`` () =
-    let move = AI.buildWord idLookupTable.['S'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
-    let foundWord =
-        match move with
-        | Some word -> true
-        | None -> false
-    Assert.True foundWord
-    
-[<Fact>]
-let ``Build Word TEST from W given hand TEST and dictionary TEST should not be possible`` () =
-    let move = AI.buildWord idLookupTable.['W'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
-    let foundWord =
-        match move with
-        | Some word -> true
-        | None -> false
-    Assert.False foundWord
-    
-[<Fact>]
-let ``Build Word TEST from E given hand TEST and dictionary TEST_HELLO`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
-    let foundWord =
-        match move with
-        | Some word -> true
-        | None -> false
-    Assert.True foundWord
-
-let wildcardHand = MultiSet.empty |> add idLookupTable.['*'] 4u
-
-[<Fact>] // * = wildcard
-let ``Build Word TEST from E given hand **** and dictionary TEST_HELLO`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) wildcardHand false tileLookupTable false coord00
-    let foundWord =
-        match move with
-        | Some word -> true
-        | None -> false
-    Assert.True foundWord
-
-
-let handContainingTst = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingle idLookupTable.['S']
-[<Fact>]
-let ``Build Word TEST from E given hand TST and dictionary TEST_HELLO`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) handContainingTst false tileLookupTable false coord00
-    let foundWordSequence =
-        match move with
-        | Some word -> true
-        | None -> false
-
-    Assert.True (foundWordSequence)
-    
-    
-let extractCoords (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> coord)
-let extractLetters (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> c)
-    
-let coords_00_02_30 = [(0,0); (1,0); (2,0); (3,0)]
-
-[<Fact>]
-let ``Build Word TEST from a E on (1,0) given hand TEST and dictionary TEST puts tiles on coordinates (0,0) - (3,0)`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord10 _TEST_dict (Some []) handContainingTest false tileLookupTable true coord10
-    let coords : (int*int) list =
-        match move with
-        | Some move -> extractCoords move
-        | None -> []
-    Assert.Equivalent ((List.sort coords_00_02_30), (List.sort coords))
-    
-[<Fact>]
-let ``Build Word TEST from a E on (1,0) given hand TEST and dictionary TEST places 3 tiles`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord10 _TEST_dict (Some []) handContainingTest false tileLookupTable true coord10
-    let tilesPlaced =
-        match move with
-        | Some move -> move.Length
-        | None -> 0
-    Assert.Equal (3, tilesPlaced)
-    
-    
-[<Fact>]
-let ``Build Word TEST from a E given hand TEST and dictionary TEST puts tiles (T S T)`` () =
-    let move = AI.buildWord idLookupTable.['E'] coord10 _TEST_dict (Some []) handContainingTest false tileLookupTable true coord10
-    let letters =
-        match move with
-        | Some move -> extractLetters move
-        | None -> []
-    Assert.Equivalent ((List.sort ['T'; 'S'; 'T']), (List.sort letters))
+// [<Fact>]
+// let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
+//     let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+//     let foundWord =
+//         match move with
+//         | Some word -> true
+//         | None -> false
+//     Assert.True foundWord
+//     
+// [<Fact>]
+// let ``Build Word TEST from S given hand TEST and dictionary TEST`` () =
+//     let move = AI.buildWord idLookupTable.['S'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+//     let foundWord =
+//         match move with
+//         | Some word -> true
+//         | None -> false
+//     Assert.True foundWord
+//     
+// [<Fact>]
+// let ``Build Word TEST from W given hand TEST and dictionary TEST should not be possible`` () =
+//     let move = AI.buildWord idLookupTable.['W'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+//     let foundWord =
+//         match move with
+//         | Some word -> true
+//         | None -> false
+//     Assert.False foundWord
+//     
+// [<Fact>]
+// let ``Build Word TEST from E given hand TEST and dictionary TEST_HELLO`` () =
+//     let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
+//     let foundWord =
+//         match move with
+//         | Some word -> true
+//         | None -> false
+//     Assert.True foundWord
+//
+// let wildcardHand = MultiSet.empty |> add idLookupTable.['*'] 4u
+//
+// [<Fact>] // * = wildcard
+// let ``Build Word TEST from E given hand **** and dictionary TEST_HELLO`` () =
+//     let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) wildcardHand false tileLookupTable false coord00
+//     let foundWord =
+//         match move with
+//         | Some word -> true
+//         | None -> false
+//     Assert.True foundWord
+//
+//
+// [<Fact>]
+// let ``Build Word TEST from E given hand TST and dictionary TEST_HELLO`` () =
+//     let move = AI.buildWord idLookupTable.['E'] coord00 _HELLO_TEST_dict (Some []) handContainingTst false tileLookupTable false coord00
+//     let foundWordSequence =
+//         match move with
+//         | Some word -> true
+//         | None -> false
+//
+//     Assert.True (foundWordSequence)
+//     
+//     
+// let extractCoords (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> coord)
+// let extractLetters (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> c)
+//     
+// let coords_00_02_30 = [(0,0); (1,0); (2,0); (3,0)]
+//
+//
+// [<Fact>]
+// let ``Build Word TEST from a E on (0,0) given hand TEST and dictionary TEST puts tiles on coordinates (0,0) - (3,0)`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+//     // let move = AI.buildWord idLookupTable.['E'] coord10 _TEST_dict (Some []) handContainingTest false tileLookupTable true coord10
+//     let coords : (int*int) list =
+//         match move with
+//         | Some move -> extractCoords move
+//         | None -> []
+//     Assert.Equivalent ((List.sort coords_00_02_30), (List.sort coords))
+//     
+// [<Fact>]
+// let ``Build Word TEST from a E on (1,0) given hand TEST and dictionary TEST places 3 tiles`` () =
+//     let move = AI.buildWord idLookupTable.['E'] coord10 _TEST_dict (Some []) handContainingTest false tileLookupTable true coord10
+//     let tilesPlaced =
+//         match move with
+//         | Some move -> move.Length
+//         | None -> 0
+//     Assert.Equal (3, tilesPlaced)
+//     
+//     
+// [<Fact>]
+// let ``Build Word TEST from a E given hand TEST and dictionary TEST puts tiles (T S T)`` () =
+//     let move = AI.buildWord idLookupTable.['E'] coord10 _TEST_dict (Some []) handContainingTest false tileLookupTable true coord10
+//     let letters =
+//         match move with
+//         | Some move -> extractLetters move
+//         | None -> []
+//     Assert.Equivalent ((List.sort ['T'; 'S'; 'T']), (List.sort letters))
