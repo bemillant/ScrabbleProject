@@ -67,7 +67,8 @@ module AI =
             | Some (false, node) ->
                 let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
                 let updatedMove = updatedAccMove accMove coord id c p
-                next nextCoord node hand isPrefixSearch updatedMove anchorCoord isHorizontal idTileLookup placedTiles
+                let updatedHand = hand |> MultiSet.removeSingle id
+                next nextCoord node updatedHand isPrefixSearch updatedMove anchorCoord isHorizontal idTileLookup placedTiles
             | None ->
                 if isPrefixSearch 
                 then
@@ -99,7 +100,7 @@ module AI =
         if st.placedTiles.IsEmpty then
             match findWordOnEmptyBoard st with
             | Some move -> move
-            | None -> failwith "Did not find a starting word!"
+            | None -> [] // failwith "Did not find a starting word!"
         else
             let findMoveHorizontal = Map.tryPick (fun coord _ -> (initializeSearch coord st true)) st.placedTiles
             match findMoveHorizontal with
@@ -108,7 +109,7 @@ module AI =
                 let findMoveVertical = Map.tryPick (fun coord _ -> (initializeSearch coord st false)) st.placedTiles
                 match findMoveVertical with
                 | Some move -> move
-                | None -> failwith "not implemented" // swap out tiles
+                | None -> [] // failwith "not implemented" // swap out tiles
 
 
 
