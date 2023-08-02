@@ -17,6 +17,7 @@ module Dictionary
         let rec insertKeyList keyList dict = 
             match keyList with
             | [] -> { map = dict.map; isEndOfWord = true }
+            | [x] when x = Key.None -> { map = dict.map; isEndOfWord = true }
             | x::xs ->
                 let map =
                     match x with

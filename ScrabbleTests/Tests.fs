@@ -23,17 +23,87 @@ open Zyzzyva.AI
 //     let z = AI.testInt
 //     Assert.True((z = 0))
     
-// [<Fact>]
-// let ``gaddag of A can step from root to A`` () =
-//     let gaddag = empty () |> insert "A"
-//     let result = gaddag |> step 'A'
-//     let isEndOfWord =
-//         match result with
-//         | Some (true, _) -> true
-//         | Some (false, _) -> false // this is the outcome ???
-//         | None -> false
-//     Assert.True(isEndOfWord)
+[<Fact>]
+let ``gaddag of A can step from root to A`` () =
+    let gaddag = empty () |> insert "A"
+    let result = gaddag |> step 'A'
+    let isEndOfWord =
+        match result with
+        | Some (true, _) -> false
+        | Some (false, node) ->
+            let result = reverse node
+            match result with
+            | Some (true, _) -> true
+            | Some (false, _) -> false
+            | None -> false
+            // false // this is the outcome ???
+        | None -> false
+    Assert.True(isEndOfWord)
+
+
+[<Fact>]
+let ``gaddag of AB can step from root to BA#`` () =
+    let gaddag = empty () |> insert "AB"
+    let result = gaddag |> step 'B'
+    let isEndOfWord =
+        match result with
+        | Some (true, _) -> false
+        | Some (false, node) ->
+            let result = step 'A' node
+            match result with
+            | Some (true, _) -> false
+            | Some (false, node) ->
+                let result = reverse node
+                match result with
+                | Some _ -> true
+                | None -> false
+            | None -> false
+            // false // this is the outcome ???
+        | None -> false
+    Assert.False(isEndOfWord)
     
+[<Fact>]
+let ``gaddag of AB can step from root to BA`` () =
+    let gaddag = empty () |> insert "AB"
+    let result = gaddag |> step 'B'
+    let isEndOfWord =
+        match result with
+        | Some (true, _) -> false
+        | Some (false, node) ->
+            let result = step 'A' node
+            match result with
+            | Some (true, _) -> true
+            | Some (false, node) ->
+                let result = reverse node
+                match result with
+                | Some _ -> false
+                | None -> false
+            | None -> false
+            // false // this is the outcome ???
+        | None -> false
+    Assert.True(isEndOfWord)
+
+[<Fact>]
+let ``gaddag of AB can step from root to A#B`` () =
+    let gaddag = empty () |> insert "AB"
+    let result = gaddag |> step 'A'
+    let isEndOfWord =
+        match result with
+        | Some (true, _) -> false
+        | Some (false, node) ->
+            let result = reverse node
+            match result with
+            | Some (true, _) -> false
+            | Some (false, node) ->
+                let result = step 'B' node
+                match result with
+                | Some _ -> true
+                | None -> false
+            | None -> false
+            // false // this is the outcome ???
+        | None -> false
+    Assert.True(isEndOfWord)
+
 [<Fact>]
 let ``gaddag of A can find word A`` () =
     let gaddag = empty () |> insert "A"
