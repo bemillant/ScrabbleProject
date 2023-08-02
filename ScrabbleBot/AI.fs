@@ -64,9 +64,8 @@ module AI =
             | Some (true, _) ->
                 updatedAccMove accMove coord id c p
             | Some (false, node) ->
-                let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
                 let updatedMove = updatedAccMove accMove coord id c p
-                next nextCoord node hand isPrefixSearch updatedMove anchorCoord isHorizontal idTileLookup placedTiles
+                next coord node hand isPrefixSearch updatedMove anchorCoord isHorizontal idTileLookup placedTiles
             | None ->
                 if isPrefixSearch 
                 then
