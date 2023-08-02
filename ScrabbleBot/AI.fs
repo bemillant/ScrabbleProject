@@ -60,7 +60,7 @@ module AI =
             let startingCharacter =
                 extract st.placedTiles.[anchorCoord] 
                 
-            let startingMove = Some [anchorCoord, st.placedTiles.[anchorCoord]] // Convert coord to move
+            let startingMove = Some [anchorCoord, st.placedTiles.[anchorCoord]] // Update to be empty!
             let check = step startingCharacter st.dict
             match check with
             | None -> None
@@ -69,18 +69,46 @@ module AI =
                     let updatedHand = st.hand |> MultiSet.removeSingle tileId
                     buildWord tileId anchorCoord startingDict startingMove updatedHand false st.tileLookup horizontal anchorCoord )
 
+    let findWordOnEmptyBoard (st: State.state)=
+        //If the board is empty, then we want to pick a word from our hand
+            st.hand 
+            |> MultiSet.toList 
+            |> List.tryPick (fun charId -> 
+                                                let tile = st.tileLookup.[charId]
+                                                tile 
+                                                |> Set.toList 
+                                                |> List.tryPick (fun tileElement -> 
+                                                                                                        let initStep = step (fst tileElement) st.dict 
+                                                                                                        let startingMove = updateAcc (Some []) (0,0) (charId, tileElement)
+                                                                                                        let updatedHand = st.hand |> MultiSet.removeSingle charId
+                                                                                                        match initStep with
+                                                                                                        |Some (_,d) -> buildWord charId (0,0) d (startingMove) updatedHand false st.tileLookup true (0,0)
+                                                                                                        |None-> None
+                                                )
+                                    )
+
+
     (*First try to find moves horizontally then if no move was found, try finding a word vertically*)
     let nextMove (st: State.state) : Move =
-        let findMoveHorizontal =
-            Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
+        printfn "%A" st.placedTiles
+        if st.placedTiles.IsEmpty then
+            match findWordOnEmptyBoard st with
+            |Some move -> move
+            |None -> failwith "Did not find a starting word!"
 
-        match findMoveHorizontal with
-        | Some move -> move
-        | None ->
-            let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
-            match findMoveVertical with
+
+
+        else
+            let findMoveHorizontal =
+                Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
+
+            match findMoveHorizontal with
             | Some move -> move
-            | None -> failwith "not implemented" // swap out tiles
+            | None ->
+                let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
+                match findMoveVertical with
+                | Some move -> move
+                | None -> failwith "not implemented" // swap out tiles
 
 
 

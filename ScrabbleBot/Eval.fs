@@ -10,7 +10,7 @@
         let l = ('L', 1)
         let o = ('O', 1)
         [h; e; l; l; o]
-    let state = mkState [("x", 5); ("y", 42)] hello ["_pos_"; "_result_"]
+    let state = mkState [("x", 5); ("y", 42)] [] ["_pos_"; "_result_"]
     let emptyState = mkState [] [] []
     
     let add (a:SM<int>) (b:SM<int>) : SM<int> =

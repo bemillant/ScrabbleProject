@@ -63,6 +63,7 @@ module Scrabble =
 
                 let input = System.Console.ReadLine()
                 let move = RegEx.parseMove input
+                printfn "---:| %A |:---" (nextMove st) 
 
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                 send cstream (SMPlay move)
@@ -169,6 +170,15 @@ module Scrabble =
         let board = Parser.mkBoard boardP
 
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
+
+        let fiveLetterWordCoordinates = [(0,0); (1,0); (2,0); (3,0); (4,0)]
+        let tileH = (8u, ('H', 1))
+        let tileE = (5u, ('E', 1))
+        let tileL = (12u, ('L', 1))
+        let tileO = (15u, ('O', 1))
+        let helloTiles = [tileH; tileE; tileL; tileL; tileO]
+
+        let helloOnBoard = List.zip fiveLetterWordCoordinates helloTiles |> Map.ofList 
 
         fun () ->
             playGame cstream tiles (State.mkState board dict numPlayers playerNumber playerTurn handSet Map.empty tiles)
