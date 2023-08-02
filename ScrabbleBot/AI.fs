@@ -9,13 +9,13 @@ module AI =
     
     type PlayedTile = coord * (uint32 * (char * int))
     type Move = PlayedTile list
-    let nextCoord ((x, y): coord) (prefixSearch: bool) isHorizontal ((anchorX, anchorY): coord) =
+    let getNextCoord ((x, y): coord) ((anchorX, anchorY): coord) (prefixSearch: bool) (isHorizontal: bool) =
         if prefixSearch then
             if isHorizontal
             then (x - 1, y)
             else (x, y - 1)
         else
-            if x + y < anchorX + anchorY 
+            if x + y < anchorX + anchorY  // We feed anchorcoord, so this should never happen!
             then if isHorizontal
                  then (anchorX + 1, anchorY)
                  else (anchorX, anchorY + 1)
@@ -27,85 +27,83 @@ module AI =
     let updateAcc (accMove: Move option) coord ((tileId:uint32), (tileElement:char*int)) = 
         accMove |> Option.get |> List.append [coord, (tileId, tileElement)] |> Some
 
-    let rec buildWord  (tileId:uint32) (coord: coord) (node:Dict) (accMove:Move option) (hand:MultiSet.MultiSet<uint32>) (hasBeenReversed:bool) (tileMap: Map<uint32,tile>) (isHorizontal: bool) (anchorCoord: coord): Move option =
-        // tileA = { (A, 1) }
-        // tileWild { (A, 0), (B, 0) ... (Z, 0) }
-        let tile = tileMap.[tileId]
-        let buildWordFromTile (tileElement:char*int) =
-            let extractedCharacter = fst tileElement
-            let check = step extractedCharacter node
-            let newCoord = nextCoord coord (not hasBeenReversed) isHorizontal anchorCoord
-            let updatedAccMove = updateAcc accMove newCoord (tileId, tileElement)
+    let rec next
+        (lastCoord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) // changes through recursion
+        (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) // stays the same
+        : Move option = // return type
+            
+        let nextCoord = getNextCoord lastCoord anchorCoord isPrefixSearch isHorizontal
+        let boardTile : (uint32*(char*int)) option = placedTiles.TryFind nextCoord
+            
+        match boardTile with
+        | Some (id, (c, p)) -> tryBoardTile c nextCoord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles
+        | None -> tryHand nextCoord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles
+    and tryBoardTile
+        (character:char)
+        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option)
+        (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>)
+        : Move option =
+            
+        let result = step character node
+        match result with
+        | Some (true, _) -> accMove
+        | Some (false, node) -> next coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles
+        | None -> None
+        
+    and tryHand
+        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option)
+        (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>)
+        : Move option =
+        
+        let updatedAccMove (accMove: Move option) (coord:coord) (tileId:uint32) (c:char) (p:int) = 
+            accMove |> Option.get |> List.append [coord, (tileId, (c, p))] |> Some
 
-            //let updatedMove = accMove |> Option.get |> List.append [(0,0),(tileId, tileElement)] |> Some // Add coord instead of 0,0
-            match check with
-            | Some (true, _) -> updatedAccMove //If the we have found a word, simply return the accumilated word
-            | Some (false, nextNode) ->
-                    let updatedHand = hand |> MultiSet.removeSingle tileId
-                    hand |> MultiSet.toList |> List.tryPick (fun tileId -> buildWord tileId newCoord nextNode updatedAccMove updatedHand hasBeenReversed tileMap isHorizontal anchorCoord )
+        let tryLetter (id, (c, p)) =
+            let result = step c node
+            match result with
+            | Some (true, _) ->
+                updatedAccMove accMove coord id c p
+            | Some (false, node) ->
+                let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+                let updatedMove = updatedAccMove accMove coord id c p
+                next nextCoord node hand isPrefixSearch updatedMove anchorCoord isHorizontal idTileLookup placedTiles
             | None ->
-                    if hasBeenReversed then None
-                    else
-                        match reverse node with
-                        | Some (_, reverseNode) -> // Never completes a word
-                            let check = buildWord tileId newCoord reverseNode accMove hand true tileMap isHorizontal anchorCoord
-                            match check with
-                            | Some move -> Some move
-                            | None -> None
-                        | None -> None
-        tile |> Set.toList |> List.tryPick (fun tileElement -> buildWordFromTile tileElement)
-
-    let findMoveFromTile (anchorCoord: coord) (st: State.state) (horizontal: bool) : Move option =
-            // Initialize search 
-            let startingCharacter =
-                extract st.placedTiles.[anchorCoord] 
-                
-            let startingMove = Some [anchorCoord, st.placedTiles.[anchorCoord]] // Update to be empty!
-            let check = step startingCharacter st.dict
-            match check with
-            | None -> None
-            | Some (_, startingDict) -> 
-                st.hand |> MultiSet.toList |> List.tryPick (fun tileId ->
-                    let updatedHand = st.hand |> MultiSet.removeSingle tileId
-                    buildWord tileId anchorCoord startingDict startingMove updatedHand false st.tileLookup horizontal anchorCoord )
+                if isPrefixSearch 
+                then
+                    let result = reverse node
+                    match result with
+                    | Some (_, reverseNode) ->
+                        next anchorCoord reverseNode hand false accMove anchorCoord isHorizontal idTileLookup placedTiles
+                    | None -> None
+                else None
+            
+        let tryTileId id = idTileLookup.[id] |> Set.toList |> List.tryPick (fun (c, p) -> tryLetter (id, (c, p)))
+        hand |> MultiSet.toList |> List.tryPick (fun id -> tryTileId id)
+    
+    let initializeSearch (anchorCoord: coord) (st: State.state) (isHorizontal: bool) : Move option =
+        // Initialize search 
+        let startingMove = Some []
+        let startingCharacter = extract st.placedTiles.[anchorCoord] 
+        let result = step startingCharacter st.dict
+        match result with
+        | Some (_, startingDict) -> next anchorCoord st.dict st.hand true startingMove anchorCoord isHorizontal st.tileLookup st.placedTiles
+        | None -> None
 
     let findWordOnEmptyBoard (st: State.state)=
-        //If the board is empty, then we want to pick a word from our hand
-            st.hand 
-            |> MultiSet.toList 
-            |> List.tryPick (fun charId -> 
-                                                let tile = st.tileLookup.[charId]
-                                                tile 
-                                                |> Set.toList 
-                                                |> List.tryPick (fun tileElement -> 
-                                                                                                        let initStep = step (fst tileElement) st.dict 
-                                                                                                        let startingMove = updateAcc (Some []) (0,0) (charId, tileElement)
-                                                                                                        let updatedHand = st.hand |> MultiSet.removeSingle charId
-                                                                                                        match initStep with
-                                                                                                        |Some (_,d) -> buildWord charId (0,0) d (startingMove) updatedHand false st.tileLookup true (0,0)
-                                                                                                        |None-> None
-                                                )
-                                    )
-
+        next (0,0) st.dict st.hand true (Some []) (0,0) true st.tileLookup st.placedTiles
 
     (*First try to find moves horizontally then if no move was found, try finding a word vertically*)
     let nextMove (st: State.state) : Move =
-        printfn "%A" st.placedTiles
         if st.placedTiles.IsEmpty then
             match findWordOnEmptyBoard st with
-            |Some move -> move
-            |None -> failwith "Did not find a starting word!"
-
-
-
+            | Some move -> move
+            | None -> failwith "Did not find a starting word!"
         else
-            let findMoveHorizontal =
-                Map.tryPick (fun coord _ -> (findMoveFromTile coord st true)) st.placedTiles
-
+            let findMoveHorizontal = Map.tryPick (fun coord _ -> (initializeSearch coord st true)) st.placedTiles
             match findMoveHorizontal with
             | Some move -> move
             | None ->
-                let findMoveVertical = Map.tryPick (fun coord _ -> (findMoveFromTile coord st false)) st.placedTiles
+                let findMoveVertical = Map.tryPick (fun coord _ -> (initializeSearch coord st false)) st.placedTiles
                 match findMoveVertical with
                 | Some move -> move
                 | None -> failwith "not implemented" // swap out tiles
