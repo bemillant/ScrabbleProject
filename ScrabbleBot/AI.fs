@@ -47,7 +47,10 @@ module AI =
                         let nextCoord = getNextCoord anchorCoord anchorCoord false isHorizontal
                         next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles
                     | None -> failwith "Not possible" // reverse and call next with that node
-                else accMove // return move
+                else
+                    let move = accMove |> Option.get
+                    if move.IsEmpty then None
+                    else accMove // return move
             else tryHand coord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles
     and tryBoardTile
         (character:char)
@@ -57,7 +60,9 @@ module AI =
             
         let result = step character node
         match result with
-        | Some (true, _) -> accMove
+        | Some (true, node) ->
+            let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+            next nextCoord node hand isPrefixSearch accMove true anchorCoord isHorizontal idTileLookup placedTiles
         | Some (false, node) ->
             let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
             next nextCoord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles
