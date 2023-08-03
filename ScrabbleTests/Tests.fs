@@ -29,11 +29,11 @@ let ``gaddag of A can step from root to A`` () =
     let result = gaddag |> step 'A'
     let isEndOfWord =
         match result with
-        | Some (true, _) -> false
+        | Some (true, _) -> true
         | Some (false, node) ->
             let result = reverse node
             match result with
-            | Some (true, _) -> true
+            | Some (true, _) -> false
             | Some (false, _) -> false
             | None -> false
             // false // this is the outcome ???
@@ -216,19 +216,41 @@ let ``TEST_dict contains word TEST`` () =
 let coord00 = (0,0)
 let coord10 = (1,0)
 
-let placedTilesE = Map.empty |> Map.add (0,0) (5u, ('E', 1))
+let placedTilesE = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1))
 let handContainingTst = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingle idLookupTable.['S']
 
 
 [<Fact>]
 let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
     let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
-    // let move = AI.buildWord idLookupTable.['E'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
     let foundWord =
         match move with
-        | Some word -> true
+        | Some _ -> true
         | None -> false
     Assert.True foundWord
+    
+let expectedTestCoordinates = [(-1,0); (1,0); (2,0)]
+let extractCoords (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> coord)
+let extractLetters (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> c)
+
+[<Fact>]
+let ``Move TEST from an E places 3 tiles`` () =
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+    let amountOfCoordinates =
+        match move with
+        | Some move -> (extractCoords move).Length
+        | None -> 0
+    Assert.Equal (3, amountOfCoordinates)
+
+[<Fact>]
+let ``Move TEST from an E places tiles on (-1,0) (1,0) (2,0)`` () =
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+    let actualCoordinates : (int*int) list =
+        match move with
+        | Some move -> extractCoords move
+        | None -> []
+    let equal = List.sort expectedTestCoordinates = List.sort actualCoordinates
+    Assert.True equal
     
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =

@@ -107,7 +107,7 @@ module Dictionary
                     | [] -> isEndOfWord
                     | _ -> aux xs dict
                 | Option.None -> false
-        let searchString = str |> List.ofSeq |> List.rev |> (fun lst -> lst @ ['#'])
+        let searchString = str |> List.ofSeq |> List.rev
         aux searchString dict
         
     let print (dict:Gaddag) =
