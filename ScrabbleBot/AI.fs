@@ -104,9 +104,8 @@ module AI =
         let startingMove = Some []
         let startingCharacter = extract st.placedTiles.[anchorCoord] 
         let result = step startingCharacter st.dict
-        match result with
-        | Some (_, startingDict) -> next anchorCoord startingDict st.hand true startingMove false anchorCoord isHorizontal st.tileLookup st.placedTiles
-        | None -> None
+        next anchorCoord st.dict st.hand true startingMove false anchorCoord isHorizontal st.tileLookup st.placedTiles
+        
 
     let findWordOnEmptyBoard (st: State.state)=
         next (0,0) st.dict st.hand true (Some []) false (0,0) true st.tileLookup st.placedTiles
