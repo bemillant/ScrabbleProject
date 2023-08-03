@@ -307,7 +307,64 @@ let ``Move TEST from an X and an E should NOT write TEST`` () =
         | None -> false
     Assert.False foundWord
     
+
+
+let placedTilesTest = 
+    Map.empty 
+    |> Map.add (-1,0) (idLookupTable.['T'], ('T', 1)) 
+    |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) 
+    |> Map.add (1,0) (idLookupTable.['S'], ('S', 1))
+    |> Map.add (2,0) (idLookupTable.['T'], ('T', 1))
     
+[<Fact>]
+let ``Test is on board and we SHOULD NOT find a move`` () = 
+    let move = next coord00 _TEST_dict MultiSet.empty true (Some []) false coord00 true tileLookupTable placedTilesTest
+    let foundWord = 
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.False foundWord
+
+[<Fact>]
+let ``Test is on board and we SHOULD find a move from hand with TST`` () = 
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesTest
+    let foundWord = 
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.True foundWord
+
+
+
+
+let words = Program.readLines "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTests/English.txt"
+
+let (EnglishDict_need_bool, _) =
+    time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
+
+let EnglishDict = EnglishDict_need_bool true
+
+let placedTilesAA = 
+    Map.empty 
+    |> Map.add (-1,0) (idLookupTable.['A'], ('T', 1)) 
+    |> Map.add (0,0) (idLookupTable.['A'], ('E', 1)) 
+
+let handContainingRando =
+    MultiSet.empty 
+    |> add idLookupTable.['E'] 1u 
+    |> add idLookupTable.['I'] 3u 
+    |> add idLookupTable.['P'] 1u 
+    |> add idLookupTable.['R'] 1u
+    |> add idLookupTable.['T'] 1u
+[<Fact>]
+let ``AA is on board and we SHOULD find a move from hand with hand EIIIPRT`` () = 
+    let move = next coord00 EnglishDict handContainingRando false (Some []) false coord00 true tileLookupTable placedTilesTest
+    let foundWord = 
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.True foundWord
+
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
 //     let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
