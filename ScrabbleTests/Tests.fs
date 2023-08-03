@@ -375,6 +375,28 @@ let ``AA is on board and we SHOULD NOT find a move from hand with hand EIIIPRT``
         | None -> false
     Assert.False foundWord
 
+[<Fact>]
+let ``REAA is not a word`` () =
+    let dict = empty () |> insert "AREA"
+    let b = dict |> lookup "REEA"
+    Assert.False b
+
+
+let placedTilesTes = 
+    Map.empty 
+    |> Map.add (-2,0) (idLookupTable.['T'], ('T', 1)) 
+    |> Map.add (-1,0) (idLookupTable.['E'], ('E', 1)) 
+    |> Map.add (0,0) (idLookupTable.['S'], ('S', 1))    
+
+[<Fact>]
+let ``We can write TEST from TES with S at (0,0)`` () =
+    let move = next coord00 _TEST_dict (MultiSet.empty |> addSingle idLookupTable.['T']) true (Some []) false coord00 true tileLookupTable placedTilesTes
+    let foundWord = 
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.True foundWord
+    
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
 //     let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
