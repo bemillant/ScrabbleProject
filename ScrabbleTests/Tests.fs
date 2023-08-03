@@ -284,6 +284,30 @@ let ``Move TEST from an E and an X blocking to the right at (3,0) can not write 
         | None -> false
     Assert.False foundWord
     
+    
+let handContainingTT = MultiSet.empty |> add idLookupTable.['T'] 2u
+
+let placedTilesES = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (1,0) (idLookupTable.['S'], ('S', 1))
+[<Fact>]
+let ``Move TEST from an E and an S writes TEST`` () =
+    let move = next coord00 _TEST_dict handContainingTT true (Some []) false coord00 true tileLookupTable placedTilesES
+    let foundWord =
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.True foundWord
+    
+let placedTilesXE = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (-1,0) (idLookupTable.['X'], ('X', 1))
+[<Fact>]
+let ``Move TEST from an X and an E should NOT write TEST`` () =
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesXE
+    let foundWord =
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.False foundWord
+    
+    
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
 //     let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
