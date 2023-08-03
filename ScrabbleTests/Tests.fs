@@ -252,6 +252,38 @@ let ``Move TEST from an E places tiles on (-1,0) (1,0) (2,0)`` () =
     let equal = List.sort expectedTestCoordinates = List.sort actualCoordinates
     Assert.True equal
     
+let placedTilesET = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (2,0) (idLookupTable.['T'], ('T', 1))
+
+[<Fact>]
+let ``Move TEST from an E and an T to the right can write TEST`` () =
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesET
+    let foundWord =
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.True foundWord
+    
+let placedTilesEX = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (2,0) (idLookupTable.['X'], ('X', 1))
+
+[<Fact>]
+let ``Move TEST from an E and an X to the right can not write TEST`` () =
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesEX
+    let foundWord =
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.False foundWord
+    
+let placedTilesE_WithXBlocking = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (3,0) (idLookupTable.['X'], ('X', 1))
+[<Fact>]
+let ``Move TEST from an E and an X blocking to the right at (3,0) can not write TEST`` () =
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE_WithXBlocking
+    let foundWord =
+        match move with
+        | Some _ -> true
+        | None -> false
+    Assert.False foundWord
+    
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
 //     let move = AI.buildWord idLookupTable.['T'] coord00 _TEST_dict (Some []) handContainingTest false tileLookupTable false coord00
