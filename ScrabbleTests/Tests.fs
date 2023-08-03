@@ -222,7 +222,7 @@ let handContainingTst = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingl
 
 [<Fact>]
 let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
     let foundWord =
         match move with
         | Some _ -> true
@@ -235,7 +235,7 @@ let extractLetters (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> 
 
 [<Fact>]
 let ``Move TEST from an E places 3 tiles`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
     let amountOfCoordinates =
         match move with
         | Some move -> (extractCoords move).Length
@@ -244,7 +244,7 @@ let ``Move TEST from an E places 3 tiles`` () =
 
 [<Fact>]
 let ``Move TEST from an E places tiles on (-1,0) (1,0) (2,0)`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
     let actualCoordinates : (int*int) list =
         match move with
         | Some move -> extractCoords move
@@ -256,7 +256,7 @@ let placedTilesET = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |
 
 [<Fact>]
 let ``Move TEST from an E and an T to the right can write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesET
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesET
     let foundWord =
         match move with
         | Some _ -> true
@@ -267,7 +267,7 @@ let placedTilesEX = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |
 
 [<Fact>]
 let ``Move TEST from an E and an X to the right can not write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesEX
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesEX
     let foundWord =
         match move with
         | Some _ -> true
@@ -277,7 +277,7 @@ let ``Move TEST from an E and an X to the right can not write TEST`` () =
 let placedTilesE_WithXBlocking = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (3,0) (idLookupTable.['X'], ('X', 1))
 [<Fact>]
 let ``Move TEST from an E and an X blocking to the right at (3,0) can not write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) coord00 true tileLookupTable placedTilesE_WithXBlocking
+    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE_WithXBlocking
     let foundWord =
         match move with
         | Some _ -> true

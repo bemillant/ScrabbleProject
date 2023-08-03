@@ -28,18 +28,30 @@ module AI =
         accMove |> Option.get |> List.append [coord, (tileId, tileElement)] |> Some
 
     let rec next
-        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) // changes through recursion
+        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) (hasFoundWord:bool) // changes through recursion
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) // stays the same
         : Move option = // return type
             
         let boardTile : (uint32*(char*int)) option = placedTiles.TryFind coord
             
         match boardTile with
-        | Some (id, (c, p)) -> tryBoardTile c coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles
-        | None -> tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles
+        | Some (id, (c, p)) -> tryBoardTile c coord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles
+        | None ->
+            if hasFoundWord 
+            then
+                if isPrefixSearch
+                then
+                    let result = node |> reverse
+                    match result with
+                    | Some (_, reverseNode) ->
+                        let nextCoord = getNextCoord anchorCoord anchorCoord false isHorizontal
+                        next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles
+                    | None -> failwith "Not possible" // reverse and call next with that node
+                else accMove // return move
+            else tryHand coord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles
     and tryBoardTile
         (character:char)
-        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option)
+        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) (hasFoundWord:bool) 
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>)
         : Move option =
             
@@ -48,11 +60,11 @@ module AI =
         | Some (true, _) -> accMove
         | Some (false, node) ->
             let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
-            next nextCoord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles
+            next nextCoord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles
         | None -> None
         
     and tryHand
-        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option)
+        (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) (hasFoundWord:bool) 
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>)
         : Move option =
         
@@ -62,13 +74,16 @@ module AI =
         let tryLetter (id, (c, p)) =
             let result = step c node
             match result with
-            | Some (true, _) ->
-                updatedAccMove accMove coord id c p
+            | Some (true, node) ->
+                let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+                let updatedMove = updatedAccMove accMove coord id c p
+                let updatedHand = hand |> MultiSet.removeSingle id
+                next nextCoord node updatedHand isPrefixSearch updatedMove true anchorCoord isHorizontal idTileLookup placedTiles
             | Some (false, node) ->
                 let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
                 let updatedMove = updatedAccMove accMove coord id c p
                 let updatedHand = hand |> MultiSet.removeSingle id
-                next nextCoord node updatedHand isPrefixSearch updatedMove anchorCoord isHorizontal idTileLookup placedTiles
+                next nextCoord node updatedHand isPrefixSearch updatedMove false anchorCoord isHorizontal idTileLookup placedTiles
             | None ->
                 if isPrefixSearch 
                 then
@@ -76,7 +91,7 @@ module AI =
                     match result with
                     | Some (_, reverseNode) ->
                         let nextCoord = getNextCoord anchorCoord anchorCoord false isHorizontal
-                        next nextCoord reverseNode hand false accMove anchorCoord isHorizontal idTileLookup placedTiles
+                        next nextCoord reverseNode hand false accMove false anchorCoord isHorizontal idTileLookup placedTiles
                     | None -> None
                 else None
             
@@ -89,11 +104,11 @@ module AI =
         let startingCharacter = extract st.placedTiles.[anchorCoord] 
         let result = step startingCharacter st.dict
         match result with
-        | Some (_, startingDict) -> next anchorCoord startingDict st.hand true startingMove anchorCoord isHorizontal st.tileLookup st.placedTiles
+        | Some (_, startingDict) -> next anchorCoord startingDict st.hand true startingMove false anchorCoord isHorizontal st.tileLookup st.placedTiles
         | None -> None
 
     let findWordOnEmptyBoard (st: State.state)=
-        next (0,0) st.dict st.hand true (Some []) (0,0) true st.tileLookup st.placedTiles
+        next (0,0) st.dict st.hand true (Some []) false (0,0) true st.tileLookup st.placedTiles
 
     (*First try to find moves horizontally then if no move was found, try finding a word vertically*)
     let nextMove (st: State.state) : Move =
