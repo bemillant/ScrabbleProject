@@ -9,19 +9,15 @@ module AI =
     
     type PlayedTile = coord * (uint32 * (char * int))
     type Move = PlayedTile list
-    let getNextCoord ((x, y): coord) ((anchorX, anchorY): coord) (prefixSearch: bool) (isHorizontal: bool) =
-        if prefixSearch then
-            if isHorizontal
-            then (x - 1, y)
-            else (x, y - 1)
-        else
-            if x + y < anchorX + anchorY  // We feed anchorcoord, so this should never happen!
-            then if isHorizontal
-                 then (anchorX + 1, anchorY)
-                 else (anchorX, anchorY + 1)
-            else if isHorizontal
-                 then (x + 1, y)
-                 else (x, y + 1)
+    let getNextCoord ((x, y): coord) (prefixSearch: bool) (isHorizontal: bool) =
+        let a =
+            if prefixSearch
+            then -1
+            else 1
+        if isHorizontal
+        then (x + a, y)
+        else (x, y + a)
+        
     let extract = fun (id, (c, p)) -> c
 
     let updateAcc (accMove: Move option) coord ((tileId:uint32), (tileElement:char*int)) = 
@@ -44,7 +40,7 @@ module AI =
                     let result = node |> reverse
                     match result with
                     | Some (_, reverseNode) ->
-                        let nextCoord = getNextCoord anchorCoord anchorCoord false isHorizontal
+                        let nextCoord = getNextCoord anchorCoord false isHorizontal
                         next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles
                     | None -> failwith "Not possible" // reverse and call next with that node
                 else
@@ -61,10 +57,10 @@ module AI =
         let result = step character node
         match result with
         | Some (true, node) ->
-            let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+            let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
             next nextCoord node hand isPrefixSearch accMove true anchorCoord isHorizontal idTileLookup placedTiles
         | Some (false, node) ->
-            let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+            let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
             next nextCoord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles
         | None -> None
         
@@ -80,12 +76,12 @@ module AI =
             let result = step c node
             match result with
             | Some (true, node) ->
-                let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+                let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
                 let updatedMove = updatedAccMove accMove coord id c p
                 let updatedHand = hand |> MultiSet.removeSingle id
                 next nextCoord node updatedHand isPrefixSearch updatedMove true anchorCoord isHorizontal idTileLookup placedTiles
             | Some (false, node) ->
-                let nextCoord = getNextCoord coord anchorCoord isPrefixSearch isHorizontal
+                let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
                 let updatedMove = updatedAccMove accMove coord id c p
                 let updatedHand = hand |> MultiSet.removeSingle id
                 next nextCoord node updatedHand isPrefixSearch updatedMove false anchorCoord isHorizontal idTileLookup placedTiles
@@ -95,7 +91,7 @@ module AI =
                     let result = reverse node
                     match result with
                     | Some (_, reverseNode) ->
-                        let nextCoord = getNextCoord anchorCoord anchorCoord false isHorizontal
+                        let nextCoord = getNextCoord anchorCoord false isHorizontal
                         next nextCoord reverseNode hand false accMove false anchorCoord isHorizontal idTileLookup placedTiles
                     | None -> None
                 else None

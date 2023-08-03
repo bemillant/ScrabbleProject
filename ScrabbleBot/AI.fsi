@@ -8,6 +8,6 @@ module AI =
 
     val nextMove: State.state -> Move
     val initializeSearch: coord -> State.state -> bool -> Move option
-    val getNextCoord: coord -> coord -> bool -> bool -> coord
+    val getNextCoord: coord -> bool -> bool -> coord
     val updateAcc : Move option -> coord -> (uint32* (char*int)) -> Move option
     val next: coord -> Dictionary.Dict -> MultiSet.MultiSet<uint32> -> bool -> Move option -> bool -> coord -> bool -> Map<uint32,tile> -> Map<coord,(uint32 * (char * int))> -> Move option

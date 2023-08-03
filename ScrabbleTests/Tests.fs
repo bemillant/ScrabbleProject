@@ -337,8 +337,8 @@ let ``Test is on board and we SHOULD find a move from hand with TST`` () =
 
 
 
-let words = Program.readLines "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTests/English.txt"
-
+// let words = Program.readLines "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTests/English.txt"
+let words = Program.readLines "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleTests\\English.txt"
 let (EnglishDict_need_bool, _) =
     time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
 
