@@ -364,6 +364,16 @@ let ``AA is on board and we SHOULD find a move from hand with hand EIIIPRT`` () 
         | Some _ -> true
         | None -> false
     Assert.True foundWord
+[<Fact>]
+let ``AA is on board and we SHOULD NOT find a move from hand with hand EIIIPRT`` () = 
+    let move = next coord00 EnglishDict handContainingRando true (Some []) false coord00 true tileLookupTable placedTilesTest
+    let foundWord = 
+        match move with
+        | Some move -> 
+            printf "%A" move
+            true
+        | None -> false
+    Assert.False foundWord
 
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
