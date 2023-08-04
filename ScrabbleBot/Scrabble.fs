@@ -142,7 +142,7 @@ module Scrabble =
                     numberOfPlayers = st.numberOfPlayers
                     playerNumber = st.playerNumber
                     currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
-                    hand = MultiSet.empty |> addNewTiles newPieces
+                    hand = st.hand |> MultiSet.removeSingle ((MultiSet.toList st.hand).Head) |> addNewTiles newPieces
                     placedTiles = st.placedTiles
                     tileLookup = st.tileLookup 
                     }
