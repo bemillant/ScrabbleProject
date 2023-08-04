@@ -46,42 +46,42 @@ module AI =
             | None, None -> false
             | _, _ -> true
         
-        if isOutOfBounds
-        then None
-        else
-            match boardTile coord with
-            | Some (id, (c, p)) -> tryBoardTile c coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
-            | None ->
-                if hasFoundWord 
+        match boardTile coord with
+        | Some (id, (c, p)) -> tryBoardTile c coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
+        | None ->
+            if hasFoundWord 
+            then
+                if isPrefixSearch
                 then
-                    if isPrefixSearch
-                    then
-                        let result = node |> reverse
-                        match result with
-                        | Some (_, reverseNode) ->
-                            let nextCoord = getNextCoord anchorCoord false isHorizontal
-                            next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles squares
-                        | None -> failwith "Not possible" // reverse and call next with that node
-                    else
-                        let move = accMove |> Option.get
-                        if move.IsEmpty 
-                        then None
-                        else if placedTiles.IsEmpty //Only needed the for the first move
-                            then 
-                                if (move.Length < 3) 
-                                then tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
-                                else accMove
-                            else accMove
+                    let result = node |> reverse
+                    match result with
+                    | Some (_, reverseNode) ->
+                        let nextCoord = getNextCoord anchorCoord false isHorizontal
+                        next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles squares
+                    | None -> failwith "Not possible" // reverse and call next with that node
                 else
-                    if hasOrthogonalLetter
-                    then 
-                        let result = node |> reverse
-                        match result with
-                        |Some (_, reverseNode) -> 
-                            let nextCoord = getNextCoord anchorCoord false isHorizontal
-                            next nextCoord reverseNode hand false accMove hasFoundWord anchorCoord isHorizontal idTileLookup placedTiles squares
-                        | None -> None
-                    else tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
+                    let move = accMove |> Option.get
+                    if move.IsEmpty 
+                    then None
+                    else if placedTiles.IsEmpty //Only needed the for the first move
+                        then 
+                            if (move.Length < 3) 
+                            then tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
+                            else accMove
+                        else accMove
+            else
+                if isOutOfBounds
+                then None
+                else
+                if hasOrthogonalLetter
+                then 
+                    let result = node |> reverse
+                    match result with
+                    |Some (_, reverseNode) -> 
+                        let nextCoord = getNextCoord anchorCoord false isHorizontal
+                        next nextCoord reverseNode hand false accMove hasFoundWord anchorCoord isHorizontal idTileLookup placedTiles squares
+                    | None -> None
+                else tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
     and tryBoardTile
         (character:char)
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) 
