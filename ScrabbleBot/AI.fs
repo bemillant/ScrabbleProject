@@ -64,8 +64,14 @@ module AI =
                         | None -> failwith "Not possible" // reverse and call next with that node
                     else
                         let move = accMove |> Option.get
-                        if move.IsEmpty then None
-                        else accMove // return move
+                        if move.IsEmpty 
+                        then None
+                        else if placedTiles.IsEmpty //Only needed the for the first move
+                            then 
+                                if (move.Length < 3) 
+                                then tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
+                                else accMove
+                            else accMove
                 else
                     if hasOrthogonalLetter
                     then 
@@ -128,6 +134,7 @@ module AI =
         
 
     let findWordOnEmptyBoard (st: State.state)=
+
         next (0,0) st.dict st.hand true (Some []) false (0,0) true st.tileLookup st.placedTiles st.board.squares
 
     (*First try to find moves horizontally then if no move was found, try finding a word vertically*)
