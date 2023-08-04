@@ -64,10 +64,14 @@ module Scrabble =
                 // let input = System.Console.ReadLine()
                 // let move = RegEx.parseMove input
                 let move = AI.nextMove st
-                // printfn "---:| %A |:---" (nextMove st) 
+                printfn "---:| %A |:---" (nextMove st) 
 
+                
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-                send cstream (SMPlay move)
+                match move with
+                |[] -> send cstream (SMChange [((MultiSet.toList st.hand).Head)]) //We did not find a move so we swap the first tile on our hand. 
+                |_ -> send cstream (SMPlay move) //We found a move so play it!
+
 
             let msg = recv cstream
 
@@ -113,6 +117,36 @@ module Scrabble =
                       tileLookup = st.tileLookup }
                     : State.state
 
+                aux st'
+            | RCM (CMChangeSuccess newPieces) -> 
+                (* Swap pieces in hand *)
+                let st' = 
+                    {
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = MultiSet.empty |> addNewTiles newPieces
+                    placedTiles = st.placedTiles
+                    tileLookup = st.tileLookup 
+                    }
+                    : State.state
+                aux st'
+            | RCM (CMChange (playerID, numOfSwap)) -> 
+                (* Another player swapped tiles *)
+                let st' = 
+                    {
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand
+                    placedTiles = st.placedTiles
+                    tileLookup = st.tileLookup 
+                    }
+                    : State.state
                 aux st'
             | RCM(CMGameOver _) -> ()
             | RCM(CMForfeit playerId) ->
