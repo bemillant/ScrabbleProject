@@ -53,6 +53,21 @@ module Scrabble =
         let addNewTiles (newPieces: (uint32 * uint32) list) (hand: MultiSet.MultiSet<uint32>) =
             newPieces |> List.fold (fun acc (id, amount) -> MultiSet.add id amount acc) hand
 
+
+        // Perhaps outline for choosing the word with the highest scoring points. Requires the move sent from AI to be a list of all moves. 
+        let calculateHighestScoringWord st moveList =
+            let calculateScore w = failwith "N I"
+
+            let rec aux (moveList: Move list) (currentHighestScoringMove: Move) = 
+                match moveList with
+                | [] -> currentHighestScoringMove
+                | move :: rest -> 
+                    let moveScore = calculateScore move
+                    if moveScore > currentHighestScoringMove
+                    then aux rest moveScore
+                    else aux rest currentHighestScoringMove
+            aux moveList []
+
         let rec aux (st: State.state) =
 
             if st.currentPlayer = st.playerNumber then
@@ -65,8 +80,8 @@ module Scrabble =
                 // let move = RegEx.parseMove input
                 let move = AI.nextMove st
                 printfn "---:| %A |:---" (nextMove st) 
-
                 
+
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                 match move with
                 |[] -> send cstream (SMChange [((MultiSet.toList st.hand).Head)]) //We did not find a move so we swap the first tile on our hand. 
