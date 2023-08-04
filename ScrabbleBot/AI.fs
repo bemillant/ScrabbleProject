@@ -68,7 +68,13 @@ module AI =
                         else accMove // return move
                 else
                     if hasOrthogonalLetter
-                    then None
+                    then 
+                        let result = node |> reverse
+                        match result with
+                        |Some (_, reverseNode) -> 
+                            let nextCoord = getNextCoord anchorCoord false isHorizontal
+                            next nextCoord reverseNode hand false accMove hasFoundWord anchorCoord isHorizontal idTileLookup placedTiles squares
+                        | None -> None
                     else tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
     and tryBoardTile
         (character:char)
@@ -78,12 +84,9 @@ module AI =
             
         let result = step character node
         match result with
-        | Some (true, node) ->
+        | Some (foundWord, node) -> //Removed one match statement to make it generic. Call next either with foundWord = true or foundWord = false
             let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
-            next nextCoord node hand isPrefixSearch accMove true anchorCoord isHorizontal idTileLookup placedTiles squares
-        | Some (false, node) ->
-            let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
-            next nextCoord node hand isPrefixSearch accMove false anchorCoord isHorizontal idTileLookup placedTiles squares
+            next nextCoord node hand isPrefixSearch accMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares
         | None -> None
         
     and tryHand
