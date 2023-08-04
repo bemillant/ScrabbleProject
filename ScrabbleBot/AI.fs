@@ -67,7 +67,7 @@ module AI =
                         if move.IsEmpty then None
                         else accMove // return move
                 else
-                    if hasOrthogonalLetter && (coord <> anchorCoord)
+                    if hasOrthogonalLetter
                     then None
                     else tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
     and tryBoardTile
