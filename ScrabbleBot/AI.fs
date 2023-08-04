@@ -1,5 +1,6 @@
 namespace Zyzzyva
 
+open Parser
 open ScrabbleUtil
 open Dictionary
 
@@ -25,7 +26,7 @@ module AI =
 
     let rec next
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) (hasFoundWord:bool) // changes through recursion
-        (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:Parser.boardFun2) // stays the same
+        (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:boardFun2) // stays the same
         : Move option = // return type
             
         let isOutOfBounds =
@@ -35,13 +36,20 @@ module AI =
                 match square with
                 | Some _ -> false
                 | None -> true
+                
+        let boardTile coord : (uint32*(char*int)) option = placedTiles.TryFind coord
+        
+        let hasOrthogonalLetter = 
+            let firstCoord = getNextCoord coord true (not isHorizontal)
+            let secondCoord = getNextCoord coord false (not isHorizontal)
+            match (boardTile firstCoord, boardTile secondCoord) with
+            | None, None -> false
+            | _, _ -> true
         
         if isOutOfBounds
         then None
         else
-            let boardTile : (uint32*(char*int)) option = placedTiles.TryFind coord
-                
-            match boardTile with
+            match boardTile coord with
             | Some (id, (c, p)) -> tryBoardTile c coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
             | None ->
                 if hasFoundWord 
@@ -58,7 +66,10 @@ module AI =
                         let move = accMove |> Option.get
                         if move.IsEmpty then None
                         else accMove // return move
-                else tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
+                else
+                    if hasOrthogonalLetter && (coord <> anchorCoord)
+                    then None
+                    else tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares
     and tryBoardTile
         (character:char)
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) 
