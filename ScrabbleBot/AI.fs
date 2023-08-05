@@ -3,6 +3,7 @@ namespace Zyzzyva
 open Parser
 open ScrabbleUtil
 open Dictionary
+open StateMonad
 
 module AI =
     let testBool = true
@@ -133,7 +134,36 @@ module AI =
     
     let points (st:State.state) (move:Move) =
         let tilePoint ((coord, (id, (c, p))):PlayedTile) = p
-        move |> List.fold (fun acc playedTile -> acc + tilePoint playedTile) 0
+        let word = move |> List.sortBy fst |> List.map (fun (_, (_, (c, p))) -> (c, p)) // Does not account for letters already on board
+        let squares = // Length of square = Length of word
+            move
+            |> List.map (fun (coord, _) -> st.board.squares coord)
+            |> List.map (fun result ->
+                match result with
+                | Success squareOption -> squareOption
+                | Failure error -> failwith "error")
+            |> List.map (fun option ->
+                match option with
+                | Some square -> square
+                | None -> st.board.defaultSquare)
+        let squaresWithWordsAndPosition =
+            squares
+            |> List.mapi (fun idx square ->
+                square |>
+                Map.map (fun priority squareFun ->
+                    squareFun word idx
+                    )
+                )
+        squaresWithWordsAndPosition
+        |> List.collect Map.toList
+        |> List.sortBy fst
+        |> List.map snd
+        |> List.fold (fun acc squareFun ->
+            match squareFun acc with
+            | Success p -> p
+            | Failure error -> failwith "error"
+            ) 0
+        
     
     // Collect all boardfunctions with the corrosponding coords and collect their squares
     // If the square option is None, then use the default square
