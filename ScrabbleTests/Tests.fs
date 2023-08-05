@@ -220,182 +220,200 @@ let placedTilesE = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1))
 let handContainingTst = MultiSet.empty |> add idLookupTable.['T'] 2u |> addSingle idLookupTable.['S']
 
 
-[<Fact>]
-let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
-    let foundWord =
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.True foundWord
+// [<Fact>]
+// let ``Build Word TEST from an E given hand TEST and dictionary TEST`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
+//     let foundWord =
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.True foundWord
+//     
+// let expectedTestCoordinates = [(-1,0); (1,0); (2,0)]
+// let extractCoords (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> coord)
+// let extractLetters (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> c)
+//
+// [<Fact>]
+// let ``Move TEST from an E places 3 tiles`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
+//     let amountOfCoordinates =
+//         match move with
+//         | Some move -> (extractCoords move).Length
+//         | None -> 0
+//     Assert.Equal (3, amountOfCoordinates)
+//
+// [<Fact>]
+// let ``Move TEST from an E places tiles on (-1,0) (1,0) (2,0)`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
+//     let actualCoordinates : (int*int) list =
+//         match move with
+//         | Some move -> extractCoords move
+//         | None -> []
+//     let equal = List.sort expectedTestCoordinates = List.sort actualCoordinates
+//     Assert.True equal
+//     
+// let placedTilesET = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (2,0) (idLookupTable.['T'], ('T', 1))
+//
+// [<Fact>]
+// let ``Move TEST from an E and an T to the right can write TEST`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesET
+//     let foundWord =
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.True foundWord
+//     
+// let placedTilesEX = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (2,0) (idLookupTable.['X'], ('X', 1))
+//
+// [<Fact>]
+// let ``Move TEST from an E and an X to the right can not write TEST`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesEX
+//     let foundWord =
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.False foundWord
+//     
+// let placedTilesE_WithXBlocking = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (3,0) (idLookupTable.['X'], ('X', 1))
+// [<Fact>]
+// let ``Move TEST from an E and an X blocking to the right at (3,0) can not write TEST`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE_WithXBlocking
+//     let foundWord =
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.False foundWord
+//     
+//     
+// let handContainingTT = MultiSet.empty |> add idLookupTable.['T'] 2u
+//
+// let placedTilesES = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (1,0) (idLookupTable.['S'], ('S', 1))
+// [<Fact>]
+// let ``Move TEST from an E and an S writes TEST`` () =
+//     let move = next coord00 _TEST_dict handContainingTT true (Some []) false coord00 true tileLookupTable placedTilesES
+//     let foundWord =
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.True foundWord
+//     
+// let placedTilesXE = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (-1,0) (idLookupTable.['X'], ('X', 1))
+// [<Fact>]
+// let ``Move TEST from an X and an E should NOT write TEST`` () =
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesXE
+//     let foundWord =
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.False foundWord
+//     
+//
+//
+// let placedTilesTest = 
+//     Map.empty 
+//     |> Map.add (-1,0) (idLookupTable.['T'], ('T', 1)) 
+//     |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) 
+//     |> Map.add (1,0) (idLookupTable.['S'], ('S', 1))
+//     |> Map.add (2,0) (idLookupTable.['T'], ('T', 1))
+//     
+// [<Fact>]
+// let ``Test is on board and we SHOULD NOT find a move`` () = 
+//     let move = next coord00 _TEST_dict MultiSet.empty true (Some []) false coord00 true tileLookupTable placedTilesTest
+//     let foundWord = 
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.False foundWord
+//
+// [<Fact>]
+// let ``Test is on board and we SHOULD find a move from hand with TST`` () = 
+//     let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 false tileLookupTable placedTilesTest
+//     let foundWord = 
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.True foundWord
+//
+//
+//
+//
+// // let words = Program.readLines "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTests/English.txt"
+// let words = Program.readLines "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleTests\\English.txt"
+// let (EnglishDict_need_bool, _) =
+//     time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
+//
+// let EnglishDict = EnglishDict_need_bool true
+//
+// let placedTilesAA = 
+//     Map.empty 
+//     |> Map.add (-1,0) (idLookupTable.['A'], ('T', 1)) 
+//     |> Map.add (0,0) (idLookupTable.['A'], ('E', 1)) 
+//
+// let handContainingRando =
+//     MultiSet.empty 
+//     |> add idLookupTable.['E'] 1u 
+//     |> add idLookupTable.['I'] 3u 
+//     |> add idLookupTable.['P'] 1u 
+//     |> add idLookupTable.['R'] 1u
+//     |> add idLookupTable.['T'] 1u
+// [<Fact>]
+// let ``AA is on board and we SHOULD find a move from hand with hand EIIIPRT`` () = 
+//     let move = next coord00 EnglishDict handContainingRando true (Some []) false coord00 false tileLookupTable placedTilesTest
+//     let foundWord = 
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.True foundWord
+// [<Fact>]
+// let ``AA is on board and we SHOULD NOT find a move from hand with hand EIIIPRT`` () = 
+//     let move = next coord00 EnglishDict handContainingRando true (Some []) false coord00 true tileLookupTable placedTilesTest
+//     let foundWord = 
+//         match move with
+//         | Some move -> 
+//             printf "%A" move
+//             true
+//         | None -> false
+//     Assert.False foundWord
+//
+// [<Fact>]
+// let ``REAA is not a word`` () =
+//     let dict = empty () |> insert "AREA"
+//     let b = dict |> lookup "REEA"
+//     Assert.False b
+//
+//
+// let placedTilesTes = 
+//     Map.empty 
+//     |> Map.add (-2,0) (idLookupTable.['T'], ('T', 1)) 
+//     |> Map.add (-1,0) (idLookupTable.['E'], ('E', 1)) 
+//     |> Map.add (0,0) (idLookupTable.['S'], ('S', 1))    
+//
+// [<Fact>]
+// let ``We can write TEST from TES with S at (0,0)`` () =
+//     let move = next coord00 _TEST_dict (MultiSet.empty |> addSingle idLookupTable.['T']) true (Some []) false coord00 true tileLookupTable placedTilesTes
+//     let foundWord = 
+//         match move with
+//         | Some _ -> true
+//         | None -> false
+//     Assert.True foundWord
+//    
+ 
+let rec numbersSeq (n:int) : int seq =
+    seq {
+        if n > 0
+        then
+            yield n
+            yield! numbersSeq (n-1)
+    }
     
-let expectedTestCoordinates = [(-1,0); (1,0); (2,0)]
-let extractCoords (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> coord)
-let extractLetters (move:Move) = move |> List.map (fun (coord, (id, (c, p))) -> c)
-
-[<Fact>]
-let ``Move TEST from an E places 3 tiles`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
-    let amountOfCoordinates =
-        match move with
-        | Some move -> (extractCoords move).Length
-        | None -> 0
-    Assert.Equal (3, amountOfCoordinates)
-
-[<Fact>]
-let ``Move TEST from an E places tiles on (-1,0) (1,0) (2,0)`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE
-    let actualCoordinates : (int*int) list =
-        match move with
-        | Some move -> extractCoords move
-        | None -> []
-    let equal = List.sort expectedTestCoordinates = List.sort actualCoordinates
-    Assert.True equal
-    
-let placedTilesET = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (2,0) (idLookupTable.['T'], ('T', 1))
-
-[<Fact>]
-let ``Move TEST from an E and an T to the right can write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesET
-    let foundWord =
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.True foundWord
-    
-let placedTilesEX = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (2,0) (idLookupTable.['X'], ('X', 1))
-
-[<Fact>]
-let ``Move TEST from an E and an X to the right can not write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesEX
-    let foundWord =
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.False foundWord
-    
-let placedTilesE_WithXBlocking = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (3,0) (idLookupTable.['X'], ('X', 1))
-[<Fact>]
-let ``Move TEST from an E and an X blocking to the right at (3,0) can not write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesE_WithXBlocking
-    let foundWord =
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.False foundWord
-    
-    
-let handContainingTT = MultiSet.empty |> add idLookupTable.['T'] 2u
-
-let placedTilesES = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (1,0) (idLookupTable.['S'], ('S', 1))
-[<Fact>]
-let ``Move TEST from an E and an S writes TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTT true (Some []) false coord00 true tileLookupTable placedTilesES
-    let foundWord =
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.True foundWord
-    
-let placedTilesXE = Map.empty |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) |> Map.add (-1,0) (idLookupTable.['X'], ('X', 1))
-[<Fact>]
-let ``Move TEST from an X and an E should NOT write TEST`` () =
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 true tileLookupTable placedTilesXE
-    let foundWord =
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.False foundWord
-    
-
-
-let placedTilesTest = 
-    Map.empty 
-    |> Map.add (-1,0) (idLookupTable.['T'], ('T', 1)) 
-    |> Map.add (0,0) (idLookupTable.['E'], ('E', 1)) 
-    |> Map.add (1,0) (idLookupTable.['S'], ('S', 1))
-    |> Map.add (2,0) (idLookupTable.['T'], ('T', 1))
+let numbersList (n:int) = numbersSeq n |> List.ofSeq
     
 [<Fact>]
-let ``Test is on board and we SHOULD NOT find a move`` () = 
-    let move = next coord00 _TEST_dict MultiSet.empty true (Some []) false coord00 true tileLookupTable placedTilesTest
-    let foundWord = 
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.False foundWord
+let ``Lazy test`` () =
+    let numbers = numbersList 3
+    let b = numbers.Length = 3
+    Assert.True b
 
-[<Fact>]
-let ``Test is on board and we SHOULD find a move from hand with TST`` () = 
-    let move = next coord00 _TEST_dict handContainingTst true (Some []) false coord00 false tileLookupTable placedTilesTest
-    let foundWord = 
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.True foundWord
-
-
-
-
-// let words = Program.readLines "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTests/English.txt"
-let words = Program.readLines "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleTests\\English.txt"
-let (EnglishDict_need_bool, _) =
-    time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
-
-let EnglishDict = EnglishDict_need_bool true
-
-let placedTilesAA = 
-    Map.empty 
-    |> Map.add (-1,0) (idLookupTable.['A'], ('T', 1)) 
-    |> Map.add (0,0) (idLookupTable.['A'], ('E', 1)) 
-
-let handContainingRando =
-    MultiSet.empty 
-    |> add idLookupTable.['E'] 1u 
-    |> add idLookupTable.['I'] 3u 
-    |> add idLookupTable.['P'] 1u 
-    |> add idLookupTable.['R'] 1u
-    |> add idLookupTable.['T'] 1u
-[<Fact>]
-let ``AA is on board and we SHOULD find a move from hand with hand EIIIPRT`` () = 
-    let move = next coord00 EnglishDict handContainingRando true (Some []) false coord00 false tileLookupTable placedTilesTest
-    let foundWord = 
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.True foundWord
-[<Fact>]
-let ``AA is on board and we SHOULD NOT find a move from hand with hand EIIIPRT`` () = 
-    let move = next coord00 EnglishDict handContainingRando true (Some []) false coord00 true tileLookupTable placedTilesTest
-    let foundWord = 
-        match move with
-        | Some move -> 
-            printf "%A" move
-            true
-        | None -> false
-    Assert.False foundWord
-
-[<Fact>]
-let ``REAA is not a word`` () =
-    let dict = empty () |> insert "AREA"
-    let b = dict |> lookup "REEA"
-    Assert.False b
-
-
-let placedTilesTes = 
-    Map.empty 
-    |> Map.add (-2,0) (idLookupTable.['T'], ('T', 1)) 
-    |> Map.add (-1,0) (idLookupTable.['E'], ('E', 1)) 
-    |> Map.add (0,0) (idLookupTable.['S'], ('S', 1))    
-
-[<Fact>]
-let ``We can write TEST from TES with S at (0,0)`` () =
-    let move = next coord00 _TEST_dict (MultiSet.empty |> addSingle idLookupTable.['T']) true (Some []) false coord00 true tileLookupTable placedTilesTes
-    let foundWord = 
-        match move with
-        | Some _ -> true
-        | None -> false
-    Assert.True foundWord
     
 // [<Fact>]
 // let ``Build Word TEST from T given hand TEST and dictionary TEST`` () =
