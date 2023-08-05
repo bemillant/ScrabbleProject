@@ -131,7 +131,10 @@ module AI =
     let getWord (st:State.state) (move:Move) : word = failwith "N I"
     // Remember to include the letters that were already on the board but are not included in the word
     
-    let points (st:State.state) (move:Move) = failwith "N I"
+    let points (st:State.state) (move:Move) =
+        let tilePoint ((coord, (id, (c, p))):PlayedTile) = p
+        move |> List.fold (fun acc playedTile -> acc + tilePoint playedTile) 0
+    
     // Collect all boardfunctions with the corrosponding coords and collect their squares
     // If the square option is None, then use the default square
     // This will result in a collection of squares
