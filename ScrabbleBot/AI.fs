@@ -25,6 +25,9 @@ module AI =
     let updateAcc (accMove: Move option) coord ((tileId:uint32), (tileElement:char*int)) = 
         accMove |> Option.get |> List.append [coord, (tileId, tileElement)] |> Some
 
+    let updatedAccMove (accMove: Move option) (coord:coord) (tileId:uint32) (c:char) (p:int) = 
+        accMove |> Option.get |> List.append [coord, (tileId, (c, p))] |> Some
+            
     let rec next
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) (hasFoundWord:bool) // changes through recursion
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:boardFun2) // stays the same
@@ -47,7 +50,7 @@ module AI =
             | None, None -> false
             | _, _ -> true
         match boardTile coord with
-        | Some (id, (c, p)) -> seq { yield! tryBoardTile c coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
+        | Some (id, (c, p)) -> seq { yield! tryBoardTile (id, (c, p)) coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
         | None ->
             if hasFoundWord 
             then
@@ -83,15 +86,16 @@ module AI =
                     | None -> seq { yield None }
                 else seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
     and tryBoardTile
-        (character:char)
+        ((id, (c, p)):(uint32*(char*int)))
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) 
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:Parser.boardFun2) 
         : Move option seq =
         
-            let result = step character node
+            let result = step c node
             match result with
             | Some (foundWord, node) -> //Removed one match statement to make it generic. Call next either with foundWord = true or foundWord = false
                 let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
+                let updatedMove = updatedAccMove accMove coord id c p
                 seq { yield! next nextCoord node hand isPrefixSearch accMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
             | None -> seq { yield None }
         
@@ -100,8 +104,7 @@ module AI =
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:Parser.boardFun2) 
         : Move option seq =
         
-        let updatedAccMove (accMove: Move option) (coord:coord) (tileId:uint32) (c:char) (p:int) = 
-            accMove |> Option.get |> List.append [coord, (tileId, (c, p))] |> Some
+        
 
         let tryLetter (id, (c, p)) : Move option seq =
             let result = step c node
@@ -127,42 +130,42 @@ module AI =
         
     let initializeSearch (anchorCoord: coord) (st: State.state) (isHorizontal: bool) : Move option seq =
         next anchorCoord st.dict st.hand true (Some []) false anchorCoord isHorizontal st.tileLookup st.placedTiles st.board.squares
-        
-    
-    let getWord (st:State.state) (move:Move) : word = failwith "N I"
-    // Remember to include the letters that were already on the board but are not included in the word
-    
-    let points (st:State.state) (move:Move) =
-        let tilePoint ((coord, (id, (c, p))):PlayedTile) = p
-        let word = move |> List.sortBy fst |> List.map (fun (_, (_, (c, p))) -> (c, p)) // Does not account for letters already on board
-        let squares = // Length of square = Length of word
+            
+    let points (st:State.state) (move:Move) : int =
+        let convert ((coord, (id, (c, p))):PlayedTile) = (coord, (c, p))
+        let coordAndWord =
             move
-            |> List.map (fun (coord, _) -> st.board.squares coord)
-            |> List.map (fun result ->
-                match result with
-                | Success squareOption -> squareOption
-                | Failure error -> failwith "error")
-            |> List.map (fun option ->
-                match option with
+            |> List.map convert
+            |> List.sortBy fst
+        let word = coordAndWord |> List.map snd
+        let getSquareFromBoard coord =
+            let result = st.board.squares coord
+            match result with
+            | Success squareOption ->
+                match squareOption with
                 | Some square -> square
-                | None -> st.board.defaultSquare)
-        let squaresWithWordsAndPosition =
-            squares
-            |> List.mapi (fun idx square ->
-                square |>
-                Map.map (fun priority squareFun ->
-                    squareFun word idx
-                    )
-                )
-        squaresWithWordsAndPosition
-        |> List.collect Map.toList
-        |> List.sortBy fst
-        |> List.map snd
-        |> List.fold (fun acc squareFun ->
-            match squareFun acc with
-            | Success p -> p
+                | None -> st.board.defaultSquare
             | Failure error -> failwith "error"
-            ) 0
+        let getSquare coord =
+            match st.placedTiles.TryFind coord with
+            | Some _ -> st.board.defaultSquare
+            | None -> getSquareFromBoard coord
+        let toSquareList (square:square) = square |> Map.toList
+        let squareFunctions =
+            coordAndWord
+            |> List.map (fun (coord, _) -> getSquare coord)
+            |> List.map toSquareList
+            |> List.collect (List.mapi (fun idx squareFunList -> (idx, squareFunList)))
+        let sortedFunctions =
+            squareFunctions
+            |> List.sortBy (fun (idx, (priority, squareFunction)) -> priority)
+        let accumulatePoints (f:squareFun) (idx:int) (acc:int) : int =
+            let result = f word idx acc
+            match result with
+            | Success points -> points
+            | Failure error -> failwith "error"
+        sortedFunctions
+        |> List.fold (fun acc (idx, (priority, squareFunction)) -> accumulatePoints squareFunction idx acc) 0
         
     
     // Collect all boardfunctions with the corrosponding coords and collect their squares
@@ -200,7 +203,10 @@ module AI =
         
     let findWordOnEmptyBoard (st: State.state) = initializeSearch (0,0) st true
 
-    (*First try to find moves horizontally then if no move was found, try finding a word vertically*)
+    let moveWithoutAlreadyPlacedTiles (st: State.state) (move:Move) : Move =
+        let isEmpty coord = not (st.placedTiles.ContainsKey coord)
+        move |> List.filter (fun (coord, (id, (c, p))) -> isEmpty coord)
+    
     let nextMove (st: State.state) : Move =
         if st.placedTiles.IsEmpty then
             match bestMoveOnTile (0,0) st with
@@ -208,7 +214,7 @@ module AI =
             | None -> [] // failwith "Did not find a starting word!"
         else
             match bestMove st with
-            | Some move -> move
+            | Some move -> moveWithoutAlreadyPlacedTiles st move
             | None -> []
 
 
