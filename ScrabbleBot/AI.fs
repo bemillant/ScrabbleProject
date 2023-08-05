@@ -96,7 +96,7 @@ module AI =
             | Some (foundWord, node) -> //Removed one match statement to make it generic. Call next either with foundWord = true or foundWord = false
                 let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
                 let updatedMove = updatedAccMove accMove coord id c p
-                seq { yield! next nextCoord node hand isPrefixSearch accMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
+                seq { yield! next nextCoord node hand isPrefixSearch updatedMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
             | None -> seq { yield None }
         
     and tryHand
