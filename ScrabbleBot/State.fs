@@ -7,24 +7,30 @@ module State
     // information, such as number of players, player turn, etc.
 
     type state =
-        { board: Parser.board
+        {
+          board: Parser.board
           dict: ScrabbleUtil.Dictionary.Dict
           numberOfPlayers: uint32
           playerNumber: uint32
           currentPlayer: uint32
           hand: MultiSet.MultiSet<uint32>
           placedTiles: Map<coord, uint32 * (char * int)>
-          tileLookup: Map<uint32, tile> }
+          tileLookup: Map<uint32, tile>
+          tileCount: uint32
+        }
 
     let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles tiles =
-        { board = board
+        {
+          board = board
           dict = dict
           numberOfPlayers = numberOfPlayers
           playerNumber = playerNumber
           currentPlayer = currentPlayer
           hand = hand
           placedTiles = placedTiles
-          tileLookup = tiles }
+          tileLookup = tiles
+          tileCount = 0u
+        }
 
     let board st = st.board
     let dict st = st.dict
