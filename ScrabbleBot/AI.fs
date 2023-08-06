@@ -35,8 +35,8 @@ module AI =
         
         let isOutOfBounds =
             match squares coord with
-            | StateMonad.Failure error -> true // Will never happen
-            | StateMonad.Success square ->
+            | Failure error -> true // Will never happen
+            | Success square ->
                 match square with
                 | Some _ -> false
                 | None -> true
@@ -61,7 +61,7 @@ module AI =
                     | Some (_, reverseNode) ->
                         let nextCoord = getNextCoord anchorCoord false isHorizontal
                         seq { yield! next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles squares }
-                    | None -> failwith "Not possible" // reverse and call next with that node
+                    | None -> failwith "Not possible" 
                 else
                     let move = accMove |> Option.get
                     if move.IsEmpty 
@@ -91,39 +91,41 @@ module AI =
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:Parser.boardFun2) 
         : Move option seq =
         
-            let result = step c node
-            match result with
-            | Some (foundWord, node) -> //Removed one match statement to make it generic. Call next either with foundWord = true or foundWord = false
-                let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
-                let updatedMove = updatedAccMove accMove coord id c p
-                seq { yield! next nextCoord node hand isPrefixSearch updatedMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
-            | None -> seq { yield None }
+        let result = step c node
+        match result with
+        | Some (foundWord, node) -> //Removed one match statement to make it generic. Call next either with foundWord = true or foundWord = false
+            let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
+            let updatedMove = updatedAccMove accMove coord id c p
+            seq { yield! next nextCoord node hand isPrefixSearch updatedMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
+        | None -> seq { yield None }
         
     and tryHand
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) 
         (anchorCoord:coord) (isHorizontal:bool) (idTileLookup:Map<uint32, tile>) (placedTiles:Map<coord, uint32*(char*int)>) (squares:Parser.boardFun2) 
         : Move option seq =
         
-        
+        let useLetter (id, (c, p)) foundWord node =
+            let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
+            let updatedMove = updatedAccMove accMove coord id c p
+            let updatedHand = hand |> MultiSet.removeSingle id
+            seq { yield! next nextCoord node updatedHand isPrefixSearch updatedMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
+
+        let tryReverse =
+            if isPrefixSearch
+            then
+                let result = reverse node
+                match result with
+                | Some (_, reverseNode) ->
+                    let nextCoord = getNextCoord anchorCoord false isHorizontal
+                    seq { yield! next nextCoord reverseNode hand false accMove false anchorCoord isHorizontal idTileLookup placedTiles squares }
+                | None -> seq { yield None }
+            else seq { yield None }
 
         let tryLetter (id, (c, p)) : Move option seq =
             let result = step c node
             match result with
-            | Some (foundWord, node) ->
-                let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
-                let updatedMove = updatedAccMove accMove coord id c p
-                let updatedHand = hand |> MultiSet.removeSingle id
-                seq { yield! next nextCoord node updatedHand isPrefixSearch updatedMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
-            | None ->
-                if isPrefixSearch 
-                then
-                    let result = reverse node
-                    match result with
-                    | Some (_, reverseNode) ->
-                        let nextCoord = getNextCoord anchorCoord false isHorizontal
-                        seq { yield! next nextCoord reverseNode hand false accMove false anchorCoord isHorizontal idTileLookup placedTiles squares }
-                    | None -> seq { yield None }
-                else seq { yield None }
+            | Some (foundWord, node) -> useLetter (id, (c, p)) foundWord node
+            | None -> tryReverse
             
         let tryTileId id = idTileLookup.[id] |> Set.toList |> List.collect (fun (c, p) -> tryLetter (id, (c, p)) |> Seq.toList)
         hand |> MultiSet.toList |> List.collect (fun id -> tryTileId id) |> List.toSeq
