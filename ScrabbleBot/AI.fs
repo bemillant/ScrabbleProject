@@ -234,9 +234,18 @@ module AI =
         bestMoveFromList st movesUsingHand
     
     let bestMoves (st: State.state) =
+        let adjacentCoords coord =
+            [
+                (fst coord + 1, snd coord)
+                (fst coord, snd coord + 1)
+                (fst coord - 1, snd coord)
+                (fst coord, snd coord - 1)
+            ]
         st.placedTiles
         |> Map.toList
-        |> List.choose (fun (coord, _) -> (bestMoveOnTile coord st))
+        |> List.map fst
+        |> List.collect adjacentCoords
+        |> List.choose (fun coord -> bestMoveOnTile coord st)
         
     let bestMove (st: State.state) : Move option =
         match bestMoves st with
@@ -251,7 +260,7 @@ module AI =
     
     let nextMove (st: State.state) : Move =
         if st.placedTiles.IsEmpty then
-            match bestMoveOnTile (0,0) st with
+            match bestMoveOnTile st.board.center st with
             | Some move -> move
             | None -> [] // failwith "Did not find a starting word!"
         else
