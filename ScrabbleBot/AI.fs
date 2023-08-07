@@ -63,28 +63,27 @@ module AI =
                         seq { yield! next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles squares }
                     | None -> failwith "Not possible" 
                 else
-                    let move = accMove |> Option.get
-                    if move.IsEmpty 
-                    then seq { yield None }
-                    else if placedTiles.IsEmpty //Only needed the for the first move
-                        then 
-                            if (move.Length < 3) 
-                            then seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
-                            else seq { yield accMove }
+                    if placedTiles.IsEmpty //Only needed the for the first move
+                    then
+                        let move = accMove |> Option.get
+                        if (move.Length < 3) 
+                        then seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
                         else seq { yield accMove }
+                    else seq { yield accMove }
             else
                 if isOutOfBounds
                 then seq { yield None }
                 else
-                if hasOrthogonalLetter
-                then 
-                    let result = node |> reverse
-                    match result with
-                    |Some (_, reverseNode) -> 
-                        let nextCoord = getNextCoord anchorCoord false isHorizontal
-                        seq { yield! next nextCoord reverseNode hand false accMove hasFoundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
-                    | None -> seq { yield None }
-                else seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
+                // if hasOrthogonalLetter // Only keep else part, if invalid moves are filtered away later
+                // then 
+                //     let result = node |> reverse
+                //     match result with
+                //     | Some (_, reverseNode) -> 
+                //         let nextCoord = getNextCoord anchorCoord false isHorizontal
+                //         seq { yield! next nextCoord reverseNode hand false accMove hasFoundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
+                //     | None -> seq { yield None }
+                // else
+                    seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
     and tryBoardTile
         ((id, (c, p)):(uint32*(char*int)))
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) 
@@ -93,7 +92,7 @@ module AI =
         
         let result = step c node
         match result with
-        | Some (foundWord, node) -> //Removed one match statement to make it generic. Call next either with foundWord = true or foundWord = false
+        | Some (foundWord, node) -> 
             let nextCoord = getNextCoord coord isPrefixSearch isHorizontal
             let updatedMove = updatedAccMove accMove coord id c p
             seq { yield! next nextCoord node hand isPrefixSearch updatedMove foundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
@@ -185,33 +184,87 @@ module AI =
             |> List.maxBy (points st)
             |> Some
 
+    let isOrthogonallyValid (move:Move) (st:State.state) : bool = // is true when no other invalid words are created around the move
+        let searchHorizontal =
+            match move with
+            | [] -> true // Should never happen
+            | [x] -> true // Should never happen
+            | tileOne::tileTwo::tail ->
+                let coordOne = fst tileOne
+                let coordTwo = fst tileTwo
+                let yOne = snd coordOne
+                let yTwo = snd coordTwo
+                yOne <> yTwo // Do they have different y-coordinates
+        let orthogonalWordIsValid ((coord, (_, (c, _))):PlayedTile) =
+            let orthogonalWord =
+                let prefix =
+                    let rec generatePrefix coord =
+                        let previousCoordinate =
+                            if searchHorizontal
+                            then (fst coord - 1, snd coord)
+                            else (fst coord, snd coord - 1)
+                        match st.placedTiles.TryFind previousCoordinate with
+                        | Some (id, (c, p)) -> generatePrefix previousCoordinate + string c
+                        | None -> ""
+                    generatePrefix coord
+                let suffix =
+                    let rec generateSuffix coord =
+                        let nextCoordinate =
+                            if searchHorizontal
+                            then (fst coord + 1, snd coord)
+                            else (fst coord, snd coord + 1)
+                        match st.placedTiles.TryFind nextCoordinate with
+                        | Some (id, (c, p)) -> string c + generateSuffix nextCoordinate
+                        | None -> ""
+                    generateSuffix coord
+                prefix + string c + suffix
+            if orthogonalWord.Length = 1
+            then true
+            else Dictionary.lookup orthogonalWord st.dict
+        move |> List.forall orthogonalWordIsValid
+        
+    let hasUsedHand (move:Move) (st:State.state) : bool =
+        let wasFromHand ((coord, _):PlayedTile) =
+            st.placedTiles.ContainsKey coord = false
+        move |> List.exists wasFromHand
+    
     let bestMoveOnTile (coord:coord) (st:State.state) : Move option =
         let horizontalMoves = initializeSearch coord st true |> Seq.toList
         let verticalMoves   = initializeSearch coord st false |> Seq.toList
         let allMoves        = horizontalMoves @ verticalMoves
                               |> List.filter Option.isSome
                               |> List.map Option.get
-        bestMoveFromList st allMoves
+        let orthogonalFilteredMoves     = allMoves |> List.filter (fun move -> isOrthogonallyValid move st)
+        let movesUsingHand              = orthogonalFilteredMoves |> List.filter (fun move -> hasUsedHand move st)
+        bestMoveFromList st movesUsingHand
     
-    let bestMoves (st: State.state) =
+    let bestMoves (st: State.state) : Move list =
+        let adjacentCoords coord =
+            [
+                (fst coord + 1, snd coord)
+                (fst coord, snd coord + 1)
+                (fst coord - 1, snd coord)
+                (fst coord, snd coord - 1)
+            ]
         st.placedTiles
         |> Map.toList
-        |> List.choose (fun (coord, _) -> (bestMoveOnTile coord st))
+        |> List.map fst
+        |> List.collect adjacentCoords
+        |> List.distinct
+        |> List.choose (fun coord -> bestMoveOnTile coord st)
         
     let bestMove (st: State.state) : Move option =
         match bestMoves st with
         | [] -> None
         | moves -> bestMoveFromList st moves
         
-    let findWordOnEmptyBoard (st: State.state) = initializeSearch (0,0) st true
-
     let moveWithoutAlreadyPlacedTiles (st: State.state) (move:Move) : Move =
         let isEmpty coord = not (st.placedTiles.ContainsKey coord)
         move |> List.filter (fun (coord, (id, (c, p))) -> isEmpty coord)
     
     let nextMove (st: State.state) : Move =
         if st.placedTiles.IsEmpty then
-            match bestMoveOnTile (0,0) st with
+            match bestMoveOnTile st.board.center st with
             | Some move -> move
             | None -> [] // failwith "Did not find a starting word!"
         else

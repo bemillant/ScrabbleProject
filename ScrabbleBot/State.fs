@@ -16,7 +16,7 @@ module State
           hand: MultiSet.MultiSet<uint32>
           placedTiles: Map<coord, uint32 * (char * int)>
           tileLookup: Map<uint32, tile>
-          tileCount: uint32
+          tilesLeft: uint32
         }
 
     let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles tiles =
@@ -29,7 +29,7 @@ module State
           hand = hand
           placedTiles = placedTiles
           tileLookup = tiles
-          tileCount = 0u
+          tilesLeft = 164u
         }
 
     let board st = st.board

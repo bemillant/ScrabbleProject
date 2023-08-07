@@ -57,11 +57,11 @@ module Scrabble =
             newPieces |> List.fold (fun acc (id, amount) -> MultiSet.add id amount acc) hand
 
         let swapPieces (st: State.state) : uint32 list =
-            let piecesLeft = st.tileCount
+            let piecesLeft = st.tilesLeft
             let amountToSwap = int (min 7u piecesLeft)
             st.hand |> MultiSet.toList |> List.take amountToSwap
         
-        let updateTileCount amount tileCount = tileCount + amount
+        let updateTileCount amount tileCount = tileCount - amount
         
         let rec aux (st: State.state) =
 
@@ -98,7 +98,7 @@ module Scrabble =
                       hand = st.hand |> getRidOfPlayedTiles playedTiles |> addNewTiles newPieces
                       placedTiles = st.placedTiles |> placeTiles playedTiles
                       tileLookup = st.tileLookup
-                      tileCount = st.tileCount |> updateTileCount (uint32 playedTiles.Length)
+                      tilesLeft = st.tilesLeft |> updateTileCount (uint32 playedTiles.Length)
                     }
                     : State.state
 
@@ -115,7 +115,7 @@ module Scrabble =
                       hand = st.hand
                       placedTiles = st.placedTiles |> placeTiles playedTiles
                       tileLookup = st.tileLookup
-                      tileCount = st.tileCount |> updateTileCount (uint32 playedTiles.Length)
+                      tilesLeft = st.tilesLeft |> updateTileCount (uint32 playedTiles.Length)
                     }
                     : State.state
 
@@ -132,7 +132,7 @@ module Scrabble =
                       hand = st.hand
                       placedTiles = st.placedTiles
                       tileLookup = st.tileLookup
-                      tileCount = st.tileCount
+                      tilesLeft = st.tilesLeft
                     }
                     : State.state
 
@@ -149,7 +149,7 @@ module Scrabble =
                         hand = st.hand |> getRidOfTiles swappedPieces |> addNewTiles newPieces
                         placedTiles = st.placedTiles
                         tileLookup = st.tileLookup
-                        tileCount = st.tileCount |> updateTileCount (uint32 newPieces.Length)
+                        tilesLeft = st.tilesLeft |> updateTileCount (uint32 newPieces.Length)
                     }
                     : State.state
                 aux st'
@@ -165,12 +165,12 @@ module Scrabble =
                         hand = st.hand
                         placedTiles = st.placedTiles
                         tileLookup = st.tileLookup
-                        tileCount = st.tileCount |> updateTileCount numOfSwap
+                        tilesLeft = st.tilesLeft |> updateTileCount numOfSwap
                     }
                     : State.state
                 aux st'
             | RCM(CMGameOver _) ->
-                printfn "%d tiles" st.tileCount
+                printfn "%d tiles" st.tilesLeft
                 printfn "%d in hand" (st.hand |> MultiSet.size)
             | RCM(CMForfeit playerId) ->
                 let st' =
@@ -187,7 +187,7 @@ module Scrabble =
                       hand = st.hand
                       placedTiles = st.placedTiles
                       tileLookup = st.tileLookup
-                      tileCount = st.tileCount
+                      tilesLeft = st.tilesLeft
                     }
                     : State.state
 

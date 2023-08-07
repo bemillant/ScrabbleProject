@@ -12,7 +12,7 @@ module State
           hand: MultiSet.MultiSet<uint32>
           placedTiles: Map<coord, uint32 * (char * int)>
           tileLookup: Map<uint32, tile>
-          tileCount: uint32
+          tilesLeft: uint32
         }
     
     val mkState : Parser.board -> Dictionary.Dict -> uint32 -> uint32 -> uint32 -> MultiSet.MultiSet<uint32> -> Map<coord,(uint32 * (char * int))> -> Map<uint32,tile> -> state
