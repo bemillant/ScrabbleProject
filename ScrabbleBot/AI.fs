@@ -228,7 +228,7 @@ module AI =
             st.placedTiles.ContainsKey coord = false
         move |> List.exists wasFromHand
     
-    let bestMoveOnTile (coord:coord) (st:State.state) : Move option =
+    let bestMoveOnTile (coord:coord) (st:State.state) : Async<Move option> =
         let horizontalMoves = initializeSearch coord st true |> Seq.toList
         let verticalMoves   = initializeSearch coord st false |> Seq.toList
         let allMoves        = horizontalMoves @ verticalMoves
@@ -236,7 +236,7 @@ module AI =
                               |> List.map Option.get
         let orthogonalFilteredMoves     = allMoves |> List.filter (fun move -> isOrthogonallyValid move st)
         let movesUsingHand              = orthogonalFilteredMoves |> List.filter (fun move -> hasUsedHand move st)
-        bestMoveFromList st movesUsingHand
+        async {return bestMoveFromList st movesUsingHand}
     
     let bestMoves (st: State.state) : Move list =
         let adjacentCoords coord =
@@ -251,7 +251,12 @@ module AI =
         |> List.map fst
         |> List.collect adjacentCoords
         |> List.distinct
-        |> List.choose (fun coord -> bestMoveOnTile coord st)
+        |> List.map (fun coord -> bestMoveOnTile coord st)
+        |> Async.Parallel 
+        |> Async.RunSynchronously
+        |> List.ofArray
+        |> List.filter Option.isSome
+        |> List.map Option.get
         
     let bestMove (st: State.state) : Move option =
         match bestMoves st with
@@ -262,11 +267,19 @@ module AI =
         let isEmpty coord = not (st.placedTiles.ContainsKey coord)
         move |> List.filter (fun (coord, (id, (c, p))) -> isEmpty coord)
     
+    let firstMove (st: State.state) : Move option = 
+        let asyncComputation = 
+            [bestMoveOnTile st.board.center st]
+            |> Async.Parallel
+            |> Async.RunSynchronously
+            |> List.ofArray
+        asyncComputation.Head
+
     let nextMove (st: State.state) : Move =
         if st.placedTiles.IsEmpty then
-            match bestMoveOnTile st.board.center st with
-            | Some move -> move
-            | None -> [] // failwith "Did not find a starting word!"
+            match firstMove st with
+            |Some move -> move
+            |None -> []
         else
             match bestMove st with
             | Some move -> moveWithoutAlreadyPlacedTiles st move
