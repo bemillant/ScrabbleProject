@@ -245,6 +245,7 @@ module AI =
         |> Map.toList
         |> List.map fst
         |> List.collect adjacentCoords
+        |> List.distinct
         |> List.choose (fun coord -> bestMoveOnTile coord st)
         
     let bestMove (st: State.state) : Move option =
