@@ -1,5 +1,6 @@
 namespace Zyzzyva
 
+open System
 open Parser
 open ScrabbleUtil
 open Dictionary
@@ -255,8 +256,7 @@ module AI =
         |> Async.Parallel 
         |> Async.RunSynchronously
         |> List.ofArray
-        |> List.filter Option.isSome
-        |> List.map Option.get
+        |> List.choose id
         
     let bestMove (st: State.state) : Move option =
         match bestMoves st with
@@ -275,15 +275,18 @@ module AI =
             |> List.ofArray
         asyncComputation.Head
 
-    let nextMove (st: State.state) : Move =
-        if st.placedTiles.IsEmpty then
-            match firstMove st with
-            |Some move -> move
-            |None -> []
-        else
-            match bestMove st with
-            | Some move -> moveWithoutAlreadyPlacedTiles st move
-            | None -> []
+    let nextMove (st: State.state) : Async<Move> =
+        async {
+            return 
+                if st.placedTiles.IsEmpty then
+                    match firstMove st with
+                    | Some move -> move
+                    | None -> []
+                else
+                    match bestMove st with
+                    | Some move -> moveWithoutAlreadyPlacedTiles st move
+                    | None -> []
+        }
 
 
 

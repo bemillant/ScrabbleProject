@@ -1,5 +1,6 @@
 ﻿namespace Zyzzyva
 
+open System.Threading.Tasks
 open ScrabbleUtil
 open ScrabbleUtil.ServerCommunication
 open System.IO
@@ -74,13 +75,34 @@ module Scrabble =
 
                 // let input = System.Console.ReadLine()
                 // let move = RegEx.parseMove input
-                let move = AI.nextMove st
-                printfn "---:| %A |:---" (nextMove st) 
+                // let move = AI.nextMove st
+                // printfn "---:| %A |:---" (nextMove st)
+                
+                let timeoutMilliseconds = 5000
+                let timeOutTask = Task.Delay(timeoutMilliseconds)
+                let findMoveTask = Async.StartAsTask (nextMove st)
+                let emptyMove : Async<Move> =
+                    async {
+                        return []
+                    }
+                let emptyMoveTask = Async.StartAsTask emptyMove
+                
+                let result =
+                    async {
+                        let! completedTask = Async.AwaitTask (Task.WhenAny(findMoveTask, timeOutTask))
+                        if completedTask = findMoveTask then
+                            printfn "found move"
+                            return findMoveTask
+                        else
+                            printfn "time ran out!"
+                            return emptyMoveTask
+                    }
+                let move = Async.RunSynchronously(result)
                 
                 debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-                match move with
+                match move.Result with
                 | [] -> send cstream (SMChange swappedPieces) //We did not find a move so we swap the first tile on our hand.
-                | _ -> send cstream (SMPlay move) //We found a move so play it!
+                | _ -> send cstream (SMPlay move.Result) //We found a move so play it!
 
 
             let msg = recv cstream

@@ -1,12 +1,13 @@
 namespace Zyzzyva
 
+open System.Threading
 open ScrabbleUtil
 
 module AI =
     type PlayedTile = coord * (uint32 * (char * int))
     type Move = PlayedTile list
 
-    val nextMove: State.state -> Move
+    val nextMove: State.state -> Async<Move>
     val initializeSearch: (int * int) -> State.state -> bool -> seq<Move option>
     val getNextCoord: coord -> bool -> bool -> coord
     val updateAcc : Move option -> coord -> (uint32* (char*int)) -> Move option

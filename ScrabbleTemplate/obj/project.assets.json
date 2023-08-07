@@ -939,33 +939,35 @@
     ]
   },
   "packageFolders": {
-    "/Users/benjaminmillant/.nuget/packages/": {}
+    "C:\\Users\\Willi\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTemplate/ScrabbleTemplate.fsproj",
+      "projectUniqueName": "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleTemplate\\ScrabbleTemplate.fsproj",
       "projectName": "ScrabbleTemplate",
-      "projectPath": "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTemplate/ScrabbleTemplate.fsproj",
-      "packagesPath": "/Users/benjaminmillant/.nuget/packages/",
-      "outputPath": "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleTemplate/obj/",
+      "projectPath": "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleTemplate\\ScrabbleTemplate.fsproj",
+      "packagesPath": "C:\\Users\\Willi\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleTemplate\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/benjaminmillant/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Willi\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net7.0"
       ],
       "sources": {
-        "/usr/local/share/dotnet/sdk/7.0.100/FSharp/library-packs": {},
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\sdk\\7.0.100\\FSharp\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net7.0": {
           "targetAlias": "net7.0",
           "projectReferences": {
-            "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/ScrabbleBot.fsproj": {
-              "projectPath": "/Users/benjaminmillant/Desktop/ITU/Summer/Functional Programming/Project/ScrabbleTemplate/ScrabbleBot/ScrabbleBot.fsproj"
+            "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleBot\\ScrabbleBot.fsproj": {
+              "projectPath": "C:\\Users\\Willi\\Desktop\\Rider Projects\\ScrabbleProject\\ScrabbleBot\\ScrabbleBot.fsproj"
             }
           }
         }
@@ -1008,7 +1010,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.100/RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
       }
     }
   }
