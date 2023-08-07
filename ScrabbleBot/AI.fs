@@ -189,7 +189,12 @@ module AI =
             match move with
             | [] -> true // Should never happen
             | [x] -> true // Should never happen
-            | tileOne::tileTwo::tail -> fst (fst tileOne) = snd (fst tileTwo) // Do they have different y-coordinates
+            | tileOne::tileTwo::tail ->
+                let coordOne = fst tileOne
+                let coordTwo = fst tileTwo
+                let yOne = snd coordOne
+                let yTwo = snd coordTwo
+                yOne <> yTwo // Do they have different y-coordinates
         let orthogonalWordIsValid ((coord, (_, (c, _))):PlayedTile) =
             let orthogonalWord =
                 let prefix =
@@ -198,7 +203,7 @@ module AI =
                             if searchHorizontal
                             then (fst coord - 1, snd coord)
                             else (fst coord, snd coord - 1)
-                        match st.placedTiles.TryFind coord with
+                        match st.placedTiles.TryFind previousCoordinate with
                         | Some (id, (c, p)) -> generatePrefix previousCoordinate + string c
                         | None -> ""
                     generatePrefix coord
@@ -208,7 +213,7 @@ module AI =
                             if searchHorizontal
                             then (fst coord + 1, snd coord)
                             else (fst coord, snd coord + 1)
-                        match st.placedTiles.TryFind coord with
+                        match st.placedTiles.TryFind nextCoordinate with
                         | Some (id, (c, p)) -> string c + generateSuffix nextCoordinate
                         | None -> ""
                     generateSuffix coord
