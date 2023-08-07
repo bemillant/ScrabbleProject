@@ -1,4 +1,4 @@
-module State
+module internal State
 
     open ScrabbleUtil
     // Make sure to keep your state localised in this module. It makes your life a whole lot easier.
@@ -17,9 +17,11 @@ module State
           placedTiles: Map<coord, uint32 * (char * int)>
           tileLookup: Map<uint32, tile>
           tilesLeft: uint32
+          timeout: uint32 option
+          playerPassCounter: Map<uint32, uint32>
         }
 
-    let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles tiles =
+    let mkState board dict numberOfPlayers playerNumber currentPlayer hand placedTiles tiles timeout =
         {
           board = board
           dict = dict
@@ -29,7 +31,9 @@ module State
           hand = hand
           placedTiles = placedTiles
           tileLookup = tiles
-          tilesLeft = 164u
+          tilesLeft = 100u
+          timeout = timeout
+          playerPassCounter = Map.empty
         }
 
     let board st = st.board

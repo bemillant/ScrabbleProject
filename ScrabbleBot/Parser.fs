@@ -3,7 +3,7 @@
 
 // Insert your Parser.fs file here from Assignment 7. All modules must be internal.
 
-module Parser
+module internal Parser
 
     open StateMonad
     open ScrabbleUtil // NEW. KEEP THIS LINE.

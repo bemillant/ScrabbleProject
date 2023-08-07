@@ -42,6 +42,16 @@ module Scrabble =
 
     let playGame cstream pieces (st: State.state) =
 
+        let getTimeout timeout = 
+            match timeout with
+            |Some t -> t
+            |None -> 5000u
+        
+        let findPass playerId= 
+                match st.playerPassCounter.TryFind playerId with
+                    |None ->  st.playerPassCounter |> Map.add playerId 1u
+                    |Some v -> st.playerPassCounter |> Map.add playerId  (v + 1u)
+
         let nextPlayer numberOfPlayers currentPlayer = (currentPlayer % numberOfPlayers) + 1u
 
         let placeTiles (playedTiles: Move) (placedTiles: Map<coord, uint32 * (char * int)>) =
@@ -59,26 +69,18 @@ module Scrabble =
 
         let swapPieces (st: State.state) : uint32 list =
             let piecesLeft = st.tilesLeft
-            let amountToSwap = int (min 7u piecesLeft)
-            st.hand |> MultiSet.toList |> List.take amountToSwap
-        
-        let updateTileCount amount tileCount = tileCount - amount
+            if piecesLeft = 0u 
+            then [] 
+            else
+                let amountToSwap = int (min 7u piecesLeft)
+                st.hand |> MultiSet.toList |> List.take amountToSwap
         
         let rec aux (st: State.state) =
-
             let swappedPieces = swapPieces st
             if st.currentPlayer = st.playerNumber then
-                Print.printHand pieces (State.hand st)
-                // remove the force print when you move on from manual input (or when you have learnt the format)
-                // forcePrint
-                    // "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-
-                // let input = System.Console.ReadLine()
-                // let move = RegEx.parseMove input
-                // let move = AI.nextMove st
-                // printfn "---:| %A |:---" (nextMove st)
+                //Print.printHand pieces (State.hand st)
                 
-                let timeoutMilliseconds = 5000
+                let timeoutMilliseconds = int (getTimeout st.timeout)
                 let timeOutTask = Task.Delay(timeoutMilliseconds)
                 let findMoveTask = Async.StartAsTask (nextMove st)
                 let emptyMove : Async<Move> =
@@ -91,19 +93,18 @@ module Scrabble =
                     async {
                         let! completedTask = Async.AwaitTask (Task.WhenAny(findMoveTask, timeOutTask))
                         if completedTask = findMoveTask then
-                            printfn "found move"
                             return findMoveTask
                         else
-                            printfn "time ran out!"
                             return emptyMoveTask
                     }
                 let move = Async.RunSynchronously(result)
                 
-                debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+                //debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
                 match move.Result with
-                | [] -> send cstream (SMChange swappedPieces) //We did not find a move so we swap the first tile on our hand.
-                | _ -> send cstream (SMPlay move.Result) //We found a move so play it!
-
+                | [] -> match swappedPieces with 
+                        | [] -> send cstream (SMPass) 
+                        | _ -> send cstream (SMChange swappedPieces) 
+                | _ -> send cstream (SMPlay move.Result)
 
             let msg = recv cstream
 
@@ -112,15 +113,17 @@ module Scrabble =
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
                 let st' =
                     {
-                      board = st.board
-                      dict = st.dict
-                      numberOfPlayers = st.numberOfPlayers
-                      playerNumber = st.playerNumber
-                      currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
-                      hand = st.hand |> getRidOfPlayedTiles playedTiles |> addNewTiles newPieces
-                      placedTiles = st.placedTiles |> placeTiles playedTiles
-                      tileLookup = st.tileLookup
-                      tilesLeft = st.tilesLeft |> updateTileCount (uint32 playedTiles.Length)
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand |> getRidOfPlayedTiles playedTiles |> addNewTiles newPieces
+                    placedTiles = st.placedTiles |> placeTiles playedTiles
+                    tileLookup = st.tileLookup
+                    tilesLeft = st.tilesLeft - (uint32 playedTiles.Length)
+                    timeout = st.timeout
+                    playerPassCounter = st.playerPassCounter
                     }
                     : State.state
 
@@ -129,15 +132,17 @@ module Scrabble =
                 (* Successful play by other player. Update your state *)
                 let st' =
                     {
-                      board = st.board
-                      dict = st.dict
-                      numberOfPlayers = st.numberOfPlayers
-                      playerNumber = st.playerNumber
-                      currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
-                      hand = st.hand
-                      placedTiles = st.placedTiles |> placeTiles playedTiles
-                      tileLookup = st.tileLookup
-                      tilesLeft = st.tilesLeft |> updateTileCount (uint32 playedTiles.Length)
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand
+                    placedTiles = st.placedTiles |> placeTiles playedTiles
+                    tileLookup = st.tileLookup
+                    tilesLeft = st.tilesLeft - (uint32 playedTiles.Length)
+                    timeout = st.timeout
+                    playerPassCounter = st.playerPassCounter |> Map.add playerId 0u
                     }
                     : State.state
 
@@ -146,18 +151,19 @@ module Scrabble =
                 (* Failed play. Update your state *)
                 let st' =
                     {
-                      board = st.board
-                      dict = st.dict
-                      numberOfPlayers = st.numberOfPlayers
-                      playerNumber = st.playerNumber
-                      currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
-                      hand = st.hand
-                      placedTiles = st.placedTiles
-                      tileLookup = st.tileLookup
-                      tilesLeft = st.tilesLeft
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand
+                    placedTiles = st.placedTiles
+                    tileLookup = st.tileLookup
+                    tilesLeft = st.tilesLeft
+                    timeout = st.timeout
+                    playerPassCounter = st.playerPassCounter
                     }
                     : State.state
-
                 aux st'
             | RCM (CMChangeSuccess newPieces) -> 
                 (* Swap pieces in hand *)
@@ -171,7 +177,9 @@ module Scrabble =
                         hand = st.hand |> getRidOfTiles swappedPieces |> addNewTiles newPieces
                         placedTiles = st.placedTiles
                         tileLookup = st.tileLookup
-                        tilesLeft = st.tilesLeft |> updateTileCount (uint32 newPieces.Length)
+                        tilesLeft = st.tilesLeft - (uint32 newPieces.Length)
+                        timeout = st.timeout
+                        playerPassCounter = st.playerPassCounter 
                     }
                     : State.state
                 aux st'
@@ -187,32 +195,86 @@ module Scrabble =
                         hand = st.hand
                         placedTiles = st.placedTiles
                         tileLookup = st.tileLookup
-                        tilesLeft = st.tilesLeft |> updateTileCount numOfSwap
+                        tilesLeft = st.tilesLeft - numOfSwap
+                        timeout = st.timeout
+                        playerPassCounter = st.playerPassCounter 
                     }
                     : State.state
                 aux st'
-            | RCM(CMGameOver _) ->
-                printfn "%d tiles" st.tilesLeft
-                printfn "%d in hand" (st.hand |> MultiSet.size)
+            |RGPE ([GPENotEnoughPieces(changeTiles, availableTiles)]) -> 
+                let st' = 
+                    {
+                        board = st.board
+                        dict = st.dict
+                        numberOfPlayers = st.numberOfPlayers
+                        playerNumber = st.playerNumber
+                        currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                        hand = st.hand
+                        placedTiles = st.placedTiles
+                        tileLookup = st.tileLookup
+                        tilesLeft = availableTiles
+                        timeout = st.timeout
+                        playerPassCounter = st.playerPassCounter 
+                    }
+                    : State.state
+                aux st'
+            | RCM(CMGameOver p) ->
+                printfn "Game finished!"
             | RCM(CMForfeit playerId) ->
                 let st' =
                     {
-                      board = st.board
-                      dict = st.dict
-                      numberOfPlayers = st.numberOfPlayers - 1u
-                      playerNumber =
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers - 1u
+                    playerNumber =
                         if st.playerNumber > playerId then
                             st.playerNumber - 1u
                         else
                             st.playerNumber
-                      currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
-                      hand = st.hand
-                      placedTiles = st.placedTiles
-                      tileLookup = st.tileLookup
-                      tilesLeft = st.tilesLeft
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand
+                    placedTiles = st.placedTiles
+                    tileLookup = st.tileLookup
+                    tilesLeft = st.tilesLeft
+                    timeout = st.timeout
+                    playerPassCounter = st.playerPassCounter
                     }
                     : State.state
 
+                aux st'
+            | RCM(CMPassed playerId) ->
+                let st' =
+                    {
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand
+                    placedTiles = st.placedTiles
+                    tileLookup = st.tileLookup
+                    tilesLeft = st.tilesLeft
+                    timeout = st.timeout
+                    playerPassCounter = findPass playerId
+                    }
+                    : State.state
+                aux st'
+            | RCM(CMTimeout playerId) -> 
+                let st' =
+                    {
+                    board = st.board
+                    dict = st.dict
+                    numberOfPlayers = st.numberOfPlayers
+                    playerNumber = st.playerNumber
+                    currentPlayer = nextPlayer st.numberOfPlayers st.currentPlayer
+                    hand = st.hand
+                    placedTiles = st.placedTiles
+                    tileLookup = st.tileLookup
+                    tilesLeft = st.tilesLeft
+                    timeout = st.timeout
+                    playerPassCounter = findPass playerId
+                    }
+                    : State.state
                 aux st'
             | RCM a -> failwith (sprintf "not implmented: %A" a)
             | RGPE err ->
@@ -254,14 +316,5 @@ module Scrabble =
 
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        let fiveLetterWordCoordinates = [(0,0); (1,0); (2,0); (3,0); (4,0)]
-        let tileH = (8u, ('H', 1))
-        let tileE = (5u, ('E', 1))
-        let tileL = (12u, ('L', 1))
-        let tileO = (15u, ('O', 1))
-        let helloTiles = [tileH; tileE; tileL; tileL; tileO]
-
-        let helloOnBoard = List.zip fiveLetterWordCoordinates helloTiles |> Map.ofList 
-
         fun () ->
-            playGame cstream tiles (State.mkState board dict numPlayers playerNumber playerTurn handSet Map.empty tiles)
+            playGame cstream tiles (State.mkState board dict numPlayers playerNumber playerTurn handSet Map.empty tiles timeout)

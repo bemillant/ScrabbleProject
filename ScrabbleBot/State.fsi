@@ -1,5 +1,5 @@
 
-module State
+module internal State
     open ScrabbleUtil
     
     type state =
@@ -13,9 +13,11 @@ module State
           placedTiles: Map<coord, uint32 * (char * int)>
           tileLookup: Map<uint32, tile>
           tilesLeft: uint32
+          timeout: uint32 option
+          playerPassCounter: Map<uint32, uint32>
         }
     
-    val mkState : Parser.board -> Dictionary.Dict -> uint32 -> uint32 -> uint32 -> MultiSet.MultiSet<uint32> -> Map<coord,(uint32 * (char * int))> -> Map<uint32,tile> -> state
+    val mkState : Parser.board -> Dictionary.Dict -> uint32 -> uint32 -> uint32 -> MultiSet.MultiSet<uint32> -> Map<coord,(uint32 * (char * int))> -> Map<uint32,tile> -> uint32 option-> state
 
     val board : state -> Parser.board
     val dict : state -> Dictionary.Dict

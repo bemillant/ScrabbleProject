@@ -1,4 +1,4 @@
-﻿module MultiSet
+﻿module internal MultiSet
     [<Sealed>]
     type MultiSet<'a when 'a : comparison>
     val empty: MultiSet<'a>

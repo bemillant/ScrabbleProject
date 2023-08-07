@@ -6,12 +6,12 @@ open ScrabbleUtil
 open Dictionary
 open StateMonad
 
-module AI =
+module internal AI =
     let testBool = true
     let testInt = 0
     
-    type PlayedTile = coord * (uint32 * (char * int))
-    type Move = PlayedTile list
+    type internal PlayedTile = coord * (uint32 * (char * int))
+    type internal Move = PlayedTile list
     let getNextCoord ((x, y): coord) (prefixSearch: bool) (isHorizontal: bool) =
         let a =
             if prefixSearch
@@ -44,12 +44,6 @@ module AI =
                 
         let boardTile coord : (uint32*(char*int)) option = placedTiles.TryFind coord
         
-        let hasOrthogonalLetter = 
-            let firstCoord = getNextCoord coord true (not isHorizontal)
-            let secondCoord = getNextCoord coord false (not isHorizontal)
-            match (boardTile firstCoord, boardTile secondCoord) with
-            | None, None -> false
-            | _, _ -> true
         match boardTile coord with
         | Some (id, (c, p)) -> seq { yield! tryBoardTile (id, (c, p)) coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
         | None ->
@@ -74,17 +68,7 @@ module AI =
             else
                 if isOutOfBounds
                 then seq { yield None }
-                else
-                // if hasOrthogonalLetter // Only keep else part, if invalid moves are filtered away later
-                // then 
-                //     let result = node |> reverse
-                //     match result with
-                //     | Some (_, reverseNode) -> 
-                //         let nextCoord = getNextCoord anchorCoord false isHorizontal
-                //         seq { yield! next nextCoord reverseNode hand false accMove hasFoundWord anchorCoord isHorizontal idTileLookup placedTiles squares }
-                //     | None -> seq { yield None }
-                // else
-                    seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
+                else seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
     and tryBoardTile
         ((id, (c, p)):(uint32*(char*int)))
         (coord:coord) (node:Dict) (hand:MultiSet.MultiSet<uint32>) (isPrefixSearch:bool) (accMove:Move option) 
@@ -169,14 +153,6 @@ module AI =
         sortedFunctions
         |> List.fold (fun acc (idx, (priority, squareFunction)) -> accumulatePoints squareFunction idx acc) 0
         
-    
-    // Collect all boardfunctions with the corrosponding coords and collect their squares
-    // If the square option is None, then use the default square
-    // This will result in a collection of squares
-    // Also extract the word from the move. We will also need the index of each letter
-    // Then calculate the points generated from the word using a folding function
-    // respecting the priority of each calculation from each square
-    
     let bestMoveFromList (st:State.state) (list:Move list) : Move option =
         match list with
         | [] -> None
@@ -287,15 +263,3 @@ module AI =
                     | Some move -> moveWithoutAlreadyPlacedTiles st move
                     | None -> []
         }
-
-
-
-// iterate over all tiles on the board (using tryPick)
-// go through the dictionary starting from the tile
-// test if a node containing "isWord" can be reached given
-// the tiles on the board and on the hand
-// test both vertically and horizontally
-// if a word is found using only tiles on the board
-// (non from the hand) then the move is not valid
-// return the first valid move found
-// if no valid move is found, give up all tiles
