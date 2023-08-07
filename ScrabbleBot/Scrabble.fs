@@ -219,7 +219,7 @@ module Scrabble =
                     : State.state
                 aux st'
             | RCM(CMGameOver p) ->
-                printfn "Game finished!"
+                ()
             | RCM(CMForfeit playerId) ->
                 let st' =
                     {
