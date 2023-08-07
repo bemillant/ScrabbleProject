@@ -63,15 +63,13 @@ module AI =
                         seq { yield! next nextCoord reverseNode hand false accMove true anchorCoord isHorizontal idTileLookup placedTiles squares }
                     | None -> failwith "Not possible" 
                 else
-                    let move = accMove |> Option.get
-                    if move.IsEmpty 
-                    then seq { yield None }
-                    else if placedTiles.IsEmpty //Only needed the for the first move
-                        then 
-                            if (move.Length < 3) 
-                            then seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
-                            else seq { yield accMove }
+                    if placedTiles.IsEmpty //Only needed the for the first move
+                    then
+                        let move = accMove |> Option.get
+                        if (move.Length < 3) 
+                        then seq { yield! tryHand coord node hand isPrefixSearch accMove anchorCoord isHorizontal idTileLookup placedTiles squares }
                         else seq { yield accMove }
+                    else seq { yield accMove }
             else
                 if isOutOfBounds
                 then seq { yield None }
@@ -186,7 +184,7 @@ module AI =
             |> List.maxBy (points st)
             |> Some
 
-    let isValid (move:Move) (st:State.state) : bool = // is true when no other invalid words are created around the move
+    let isOrthogonallyValid (move:Move) (st:State.state) : bool = // is true when no other invalid words are created around the move
         let searchHorizontal =
             match move with
             | [] -> true // Should never happen
@@ -220,14 +218,20 @@ module AI =
             else Dictionary.lookup orthogonalWord st.dict
         move |> List.forall orthogonalWordIsValid
         
+    let hasUsedHand (move:Move) (st:State.state) : bool =
+        let wasFromHand ((coord, _):PlayedTile) =
+            st.placedTiles.ContainsKey coord = false
+        move |> List.exists wasFromHand
+    
     let bestMoveOnTile (coord:coord) (st:State.state) : Move option =
         let horizontalMoves = initializeSearch coord st true |> Seq.toList
         let verticalMoves   = initializeSearch coord st false |> Seq.toList
         let allMoves        = horizontalMoves @ verticalMoves
                               |> List.filter Option.isSome
                               |> List.map Option.get
-        let filteredMoves   = allMoves |> List.filter (fun move -> isValid move st)
-        bestMoveFromList st filteredMoves
+        let orthogonalFilteredMoves     = allMoves |> List.filter (fun move -> isOrthogonallyValid move st)
+        let movesUsingHand              = orthogonalFilteredMoves |> List.filter (fun move -> hasUsedHand move st)
+        bestMoveFromList st movesUsingHand
     
     let bestMoves (st: State.state) =
         st.placedTiles
