@@ -37,10 +37,10 @@ let main argv =
 
     let words = readLines "../../../Dictionaries/English.txt"
     //B ⬇️ W ^
-    // let words = readLines (System.IO.Path.Combine("Dictionaries", "English.txt"))
+    //let words = readLines (System.IO.Path.Combine("Dictionaries", "English.txt"))
 
     let handSize = 7u
-    let timeout = None
+    let timeout = Some (5000u)
     let tiles = ScrabbleUtil.English.tiles 1u
     let seed = None
     let port = 13001
@@ -54,8 +54,8 @@ let main argv =
     let (dictionary, time) =
         time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
 
-    let players    = [("Zyzzyva", dictionary, Zyzzyva.Scrabble.startGame); ("OxyphenButazone", dictionary, Oxyphenbutazone.Scrabble.startGame)]
-    // let players = spawnMultiples "Zyzzyva" dictionary Zyzzyva.Scrabble.startGame 2
+    // let players    = [("Zyzzyva", dictionary, Zyzzyva.Scrabble.startGame); ("OxyphenButazone", dictionary, Oxyphenbutazone.Scrabble.startGame)]
+    let players = spawnMultiples "Zyzzyva" dictionary Zyzzyva.Scrabble.startGame 2
     // let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
 
 
