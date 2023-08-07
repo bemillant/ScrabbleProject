@@ -189,7 +189,7 @@ module AI =
             match move with
             | [] -> true // Should never happen
             | [x] -> true // Should never happen
-            | tileOne::tileTwo::tail -> snd (fst tileOne) = snd (fst tileTwo) // Do they share y-coordinates
+            | tileOne::tileTwo::tail -> fst (fst tileOne) = snd (fst tileTwo) // Do they have different y-coordinates
         let orthogonalWordIsValid ((coord, (_, (c, _))):PlayedTile) =
             let orthogonalWord =
                 let prefix =
@@ -198,7 +198,7 @@ module AI =
                             if searchHorizontal
                             then (fst coord - 1, snd coord)
                             else (fst coord, snd coord - 1)
-                        match st.placedTiles.TryFind previousCoordinate with
+                        match st.placedTiles.TryFind coord with
                         | Some (id, (c, p)) -> generatePrefix previousCoordinate + string c
                         | None -> ""
                     generatePrefix coord
@@ -208,7 +208,7 @@ module AI =
                             if searchHorizontal
                             then (fst coord + 1, snd coord)
                             else (fst coord, snd coord + 1)
-                        match st.placedTiles.TryFind nextCoordinate with
+                        match st.placedTiles.TryFind coord with
                         | Some (id, (c, p)) -> string c + generateSuffix nextCoordinate
                         | None -> ""
                     generateSuffix coord
@@ -233,7 +233,7 @@ module AI =
         let movesUsingHand              = orthogonalFilteredMoves |> List.filter (fun move -> hasUsedHand move st)
         bestMoveFromList st movesUsingHand
     
-    let bestMoves (st: State.state) =
+    let bestMoves (st: State.state) : Move list =
         let adjacentCoords coord =
             [
                 (fst coord + 1, snd coord)
@@ -253,8 +253,6 @@ module AI =
         | [] -> None
         | moves -> bestMoveFromList st moves
         
-    let findWordOnEmptyBoard (st: State.state) = initializeSearch (0,0) st true
-
     let moveWithoutAlreadyPlacedTiles (st: State.state) (move:Move) : Move =
         let isEmpty coord = not (st.placedTiles.ContainsKey coord)
         move |> List.filter (fun (coord, (id, (c, p))) -> isEmpty coord)
